@@ -23,6 +23,7 @@ const Counter = styled.div`
     font-weight: bold;
     color: crimson;
     font-size: 18px;
+    margin-top: 5px;
 `;
 
 function Profile() {

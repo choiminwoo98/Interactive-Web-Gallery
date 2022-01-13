@@ -1,15 +1,22 @@
-import { useState } from "react";
+import { Outlet } from "react-router-dom";
+import { useRecoilState } from "recoil";
 import styled from "styled-components";
-import AuthForm from "../components/AuthForm";
+import { isLoggedState } from "../atom";
+import AuthForm from "../components/Auth";
 import Profile from "../components/Profile";
 
 const Container = styled.div`
+    width: 100%;
+    height: 100%;
     display: flex;
-    max-width: 680px;
-    margin: 0 auto;
-    justify-self: center;
-    align-items: center;
-    height: 100vh;
+    flex-wrap: wrap;
+    margin: 10px 0px;
+    @media screen and (min-width: 800px) {
+        & {
+            width: 800px;
+            margin: 0 auto;
+        }
+    }
 `;
 
 const ProfileArea = styled.div`
@@ -28,17 +35,21 @@ const ProfileArea = styled.div`
 
 const ProfileWrap = styled.div`
     text-align: left;
-    padding: 10px;
+    padding: 10px 25px;
     margin-right: 10px;
     border-radius: 4px;
     border: 1px solid silver;
-    background-color: lightcoral;
     display: flex;
     flex-direction: column;
+    @media screen and (max-width: 800px) {
+        & {
+            margin: 0px;
+        }
+    }
 `;
 
 function Home() {
-    const [isLogged, setIsLogged] = useState(false);
+    const [isLogged, setIsLogged] = useRecoilState(isLoggedState);
     const onClick = () => {
         setIsLogged((prev) => !prev);
     };
@@ -50,6 +61,7 @@ function Home() {
                 </ProfileWrap>
                 <button onClick={onClick}>변환</button>
             </ProfileArea>
+            <Outlet />
         </Container>
     );
 }
