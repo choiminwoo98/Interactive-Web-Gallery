@@ -1,11 +1,13 @@
 import React from "react";
 import ReactDOM from "react-dom";
+import { QueryClient, QueryClientProvider } from "react-query";
 import { RecoilRoot } from "recoil";
 import { createGlobalStyle, ThemeProvider } from "styled-components";
 import App from "./App";
 import { them } from "./theme";
 
 const GlobalStyle = createGlobalStyle`
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
 html, body, div, span, applet, object, iframe,
 h1, h2, h3, h4, h5, h6, p, blockquote, pre,
 a, abbr, acronym, address, big, cite, code,
@@ -55,20 +57,30 @@ table {
 }
 * {
   box-sizing: border-box;
+  font-family: 'Noto Sans KR', sans-serif;
 }
+input,
+textarea{
+  outline: none;
+}
+
 a {
   text-decoration:none;
   color:inherit;
 }
 `;
 
+const client = new QueryClient();
+
 ReactDOM.render(
     <React.StrictMode>
         <RecoilRoot>
-            <ThemeProvider theme={them}>
-                <GlobalStyle />
-                <App />
-            </ThemeProvider>
+            <QueryClientProvider client={client}>
+                <ThemeProvider theme={them}>
+                    <GlobalStyle />
+                    <App />
+                </ThemeProvider>
+            </QueryClientProvider>
         </RecoilRoot>
     </React.StrictMode>,
     document.getElementById("root")

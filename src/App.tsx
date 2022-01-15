@@ -1,4 +1,5 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { ReactQueryDevtools } from "react-query/devtools";
 import NotFound from "./components/NotFound";
 import Home from "./routes/Home";
 import Join from "./routes/Join";
@@ -14,6 +15,7 @@ function App() {
                 </Route>
                 <Route path="*" element={<NotFound />} />
             </Routes>
+            <ReactQueryDevtools initialIsOpen={true} />
         </BrowserRouter>
     );
 }

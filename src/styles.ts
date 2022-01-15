@@ -57,7 +57,6 @@ export const InputColumn = styled.div<{ messageWidth?: string }>`
         border-bottom: 3px solid ${(props) => props.theme.gray.normal};
         background: none;
         border-radius: 2px;
-        outline: none;
         &::placeholder {
             color: ${(props) => props.theme.gray.very};
         }

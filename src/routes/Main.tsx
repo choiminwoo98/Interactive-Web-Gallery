@@ -1,136 +1,200 @@
-import { useForm } from "react-hook-form";
+import { AnimatePresence, motion } from "framer-motion";
+import { useState } from "react";
 import { useRecoilValue } from "recoil";
 import styled from "styled-components";
-import { isLoggedState } from "../atom";
-import {
-    Button,
-    ButtonGroup,
-    ErrorMessage,
-    InputColumn,
-    InputGroup,
-    TimeLine,
-} from "../styles";
+import { albumState, isLoggedState } from "../atom";
+import Album from "../components/Album";
+import AlbumForm from "../components/AlbumForm";
 
-const AlbumForm = styled.form`
-    border-bottom: 1px solid silver;
-    padding: 10px;
-    background-color: #b3c8db;
+const SliderWrap = styled.div`
+    grid-column: span 2;
+    height: 300px;
+    position: relative;
+    align-self: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     overflow: hidden;
+    background-color: #b4d6e2;
 `;
 
-interface IFormValue {
-    name: string;
-    description?: string;
-    password?: string;
-    passwordCheck?: string;
-    imagePath?: string;
-}
+const ButtonArrow = styled(motion.div)`
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    cursor: pointer;
+    z-index: 1;
+`;
+
+const Slider = styled(motion.div)`
+    width: 100%;
+    height: 100%;
+    display: flex;
+    margin: 0 auto;
+    position: absolute;
+    justify-content: center;
+    align-items: center;
+`;
+
+const CircleWrapper = styled.div`
+    position: absolute;
+    bottom: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+`;
+
+const Circle = styled(motion.div)<{ isClicked: boolean }>`
+    width: 10px;
+    height: 10px;
+    border-radius: 5px;
+    background-color: ${(props) =>
+        props.isClicked ? (props) => props.theme.yellow : "white"};
+    cursor: pointer;
+`;
+
+const sliderVariants = {
+    hidden: (isBack: boolean) => ({
+        x: isBack ? -800 : 800,
+        transition: {
+            duration: 1,
+        },
+    }),
+    visible: {
+        x: 0,
+        transition: {
+            duration: 1,
+        },
+    },
+    exit: (isBack: boolean) => ({
+        x: isBack ? 800 : -800,
+        transition: {
+            duration: 1,
+        },
+    }),
+};
 
 function Main() {
+    const [index, setIndex] = useState(0);
+    const [leaving, setLeaving] = useState(false);
+    const [back, setBack] = useState(false);
+    const albums = useRecoilValue(albumState);
     const isLogged = useRecoilValue(isLoggedState);
-    const {
-        register,
-        watch,
-        handleSubmit,
-        setError,
-        getValues,
-        formState: { errors },
-    } = useForm<IFormValue>();
-    watch(({ password, passwordCheck }) => {
-        if (password !== passwordCheck) {
-            setError("passwordCheck", {
-                message: "동일한 암호를 입력하세요.",
-            });
+    const toggleLeaving = () => setLeaving((prev) => !prev);
+    const onClickIncrease = () => {
+        if (leaving) return;
+        setBack(false);
+        toggleLeaving();
+        setIndex((prev) => (prev + 1 === albums.length ? 0 : prev + 1));
+    };
+    const onClickDecrease = () => {
+        if (leaving) return;
+        setBack(true);
+        toggleLeaving();
+        setIndex((prev) => (prev - 1 < 0 ? albums.length - 1 : prev - 1));
+    };
+    const onClickSelect = (curIndex: number) => {
+        if (leaving || index === curIndex) return;
+        else if (index < curIndex) {
+            setBack(false);
+            toggleLeaving();
+        } else {
+            setBack(true);
+            toggleLeaving();
         }
-        if (password === passwordCheck) {
-            setError("passwordCheck", { message: "" });
-        }
-    });
-    const onValid = (data: IFormValue) => {
-        console.log("success");
+        setIndex(curIndex);
     };
     return (
-        <TimeLine>
+        <>
             {isLogged && (
-                <AlbumForm onSubmit={handleSubmit(onValid)}>
-                    <InputGroup>
-                        <InputColumn messageWidth={"300px"}>
-                            <input
-                                {...register("name", {
-                                    required: "앨범 이름 입력은 필수입니다.",
-                                })}
-                                size={15}
-                                placeholder="앨범 이름"
-                            />
-
-                            <ErrorMessage>{errors.name?.message}</ErrorMessage>
-                        </InputColumn>
-                        <InputColumn messageWidth="120px">
-                            <textarea
-                                {...register("description")}
-                                placeholder="소개글 작성"
-                            />
-                            <ErrorMessage>
-                                {errors.description?.message}
-                            </ErrorMessage>
-                        </InputColumn>
-                        <InputColumn messageWidth={"320px"}>
-                            <input
-                                {...register("password", {
-                                    maxLength: {
-                                        value: 8,
-                                        message:
-                                            "앨범 비밀번호는 최대 8자 이내입니다.",
-                                    },
-                                })}
-                                size={8}
-                                type="password"
-                                placeholder="비밀번호"
-                            />
-                            <ErrorMessage>
-                                {errors.password?.message}
-                            </ErrorMessage>
-                        </InputColumn>
-                        <InputColumn messageWidth={"320px"}>
-                            <input
-                                {...register("passwordCheck", {
-                                    validate: {
-                                        value: (value) => {
-                                            const { password } = getValues();
-                                            return (
-                                                password === value ||
-                                                "동일한 암호를 입력하세요."
-                                            );
-                                        },
-                                    },
-                                })}
-                                size={8}
-                                type="password"
-                                placeholder="비밀번호 재확인"
-                            />
-                            <ErrorMessage>
-                                {errors.passwordCheck?.message}
-                            </ErrorMessage>
-                        </InputColumn>
-                        <InputColumn>
-                            <input
-                                {...register("imagePath")}
-                                type="url"
-                                placeholder="이미지 경로"
-                            />
-                            <ErrorMessage>
-                                {errors.imagePath?.message}
-                            </ErrorMessage>
-                        </InputColumn>
-                    </InputGroup>
-                    <ButtonGroup>
-                        <Button type="submit" as="button">
-                            생성
-                        </Button>
-                    </ButtonGroup>
-                </AlbumForm>
+                <>
+                    <AlbumForm />
+                    {albums.length !== 0 && (
+                        <SliderWrap>
+                            <ButtonArrow
+                                style={{ left: 0 }}
+                                onClick={onClickDecrease}
+                            >
+                                <svg
+                                    aria-hidden="true"
+                                    focusable="false"
+                                    data-prefix="far"
+                                    data-icon="arrow-alt-circle-left"
+                                    role="img"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 512 512"
+                                    className="svg-inline--fa fa-arrow-alt-circle-left fa-w-16 fa-5x"
+                                >
+                                    <path
+                                        fill="currentColor"
+                                        d="M8 256c0 137 111 248 248 248s248-111 248-248S393 8 256 8 8 119 8 256zm448 0c0 110.5-89.5 200-200 200S56 366.5 56 256 145.5 56 256 56s200 89.5 200 200zm-72-20v40c0 6.6-5.4 12-12 12H256v67c0 10.7-12.9 16-20.5 8.5l-99-99c-4.7-4.7-4.7-12.3 0-17l99-99c7.6-7.6 20.5-2.2 20.5 8.5v67h116c6.6 0 12 5.4 12 12z"
+                                    ></path>
+                                </svg>
+                            </ButtonArrow>
+                            <AnimatePresence
+                                initial={false}
+                                onExitComplete={toggleLeaving}
+                                custom={back}
+                            >
+                                <Slider
+                                    custom={back}
+                                    key={index}
+                                    variants={sliderVariants}
+                                    initial="hidden"
+                                    animate="visible"
+                                    exit="exit"
+                                    transition={{ type: "tween" }}
+                                >
+                                    <Album key={index} album={albums[index]} />
+                                </Slider>
+                            </AnimatePresence>
+                            <ButtonArrow
+                                style={{ right: 0 }}
+                                onClick={onClickIncrease}
+                            >
+                                <svg
+                                    aria-hidden="true"
+                                    focusable="false"
+                                    data-prefix="far"
+                                    data-icon="arrow-alt-circle-right"
+                                    role="img"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 512 512"
+                                    className="svg-inline--fa fa-arrow-alt-circle-right fa-w-16 fa-5x"
+                                >
+                                    <path
+                                        fill="currentColor"
+                                        d="M504 256C504 119 393 8 256 8S8 119 8 256s111 248 248 248 248-111 248-248zm-448 0c0-110.5 89.5-200 200-200s200 89.5 200 200-89.5 200-200 200S56 366.5 56 256zm72 20v-40c0-6.6 5.4-12 12-12h116v-67c0-10.7 12.9-16 20.5-8.5l99 99c4.7 4.7 4.7 12.3 0 17l-99 99c-7.6 7.6-20.5 2.2-20.5-8.5v-67H140c-6.6 0-12-5.4-12-12z"
+                                    ></path>
+                                </svg>
+                            </ButtonArrow>
+                            <CircleWrapper>
+                                {albums.map((value, curIndex) =>
+                                    curIndex === index ? (
+                                        <Circle
+                                            isClicked={curIndex === index}
+                                            key={curIndex}
+                                            onClick={() =>
+                                                onClickSelect(curIndex)
+                                            }
+                                        />
+                                    ) : (
+                                        <Circle
+                                            isClicked={curIndex === index}
+                                            onClick={() =>
+                                                onClickSelect(curIndex)
+                                            }
+                                            key={curIndex}
+                                        />
+                                    )
+                                )}
+                            </CircleWrapper>
+                        </SliderWrap>
+                    )}
+                </>
             )}
-        </TimeLine>
+        </>
     );
 }
 

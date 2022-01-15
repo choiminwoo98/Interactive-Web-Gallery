@@ -8,8 +8,10 @@ import Profile from "../components/Profile";
 const Container = styled.div`
     width: 100%;
     height: 100%;
-    display: flex;
-    flex-wrap: wrap;
+    gap: 10px;
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    justify-content: center;
     margin: 10px 0px;
     @media screen and (min-width: 800px) {
         & {
@@ -24,7 +26,6 @@ const ProfileArea = styled.div`
     display: inline-block;
     vertical-align: top;
     margin: 10px 0;
-
     @media screen and (min-width: 800px) {
         & {
             width: 290px;
@@ -41,6 +42,7 @@ const ProfileWrap = styled.div`
     border: 1px solid silver;
     display: flex;
     flex-direction: column;
+    background-color: #bde2b9;
     @media screen and (max-width: 800px) {
         & {
             margin: 0px;
