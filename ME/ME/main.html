@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <title>Example 01.02 - First Scene</title>
+    <script type="text/javascript" src="../libs/three.js"></script>
+    <script type="text/javascript" src="../libs/stats.js"></script>
+    <script type="text/javascript" src="../libs/dat.gui.js"></script>
+    <script type="text/javascript" src="../libs/OrbitControls.js"></script>
+    <script type="text/javascript" src="../libs/Projector.js"></script>
+    <style>
+        body {
+            /* set margin to 0 and overflow to hidden, to go fullscreen */
+            margin: 0;
+            overflow: hidden;
+        }
+        #info{
+            position:absolute;
+            background-color:rgb(50,50,50);
+            color:white;
+            width:300px;
+            height:100vh;
+            padding: 5px;
+            right:5px;
+            text-align:center;
+            top:5px;
+        }
+        #inputfile{
+            position: absolute;
+            bottom: 50px;
+            left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <form method="post" enctype="multipart/form-data">
+        <div class="div" id ="info" >
+            <input type="file" id="inputfile" onchange="loadFile(this)"/>
+        </div>
+    </form>
+<div id="Stats-output">
+</div>
+<!-- Div which will hold the Output -->
+<div id="WebGL-output">
+</div>
+<!-- Javascript code that runs our Three.js examples -->
+<script type="text/javascript">
+    
+    var pname;
+    function loadFile(input) {
+                var file = input.files[0];
+                console.log(file.name);
+                pname.material.map = THREE.ImageUtils.loadTexture(URL.createObjectURL(file));
+
+    };
+
+    // once everything is loaded, we run our Three.js stuff.
+    function init() {
+
+        var stats = initStats();
+
+        // create a scene, that will hold all our elements such as objects, cameras and lights.
+        var scene = new THREE.Scene();
+
+        // create a camera, which defines where we're looking at.
+        var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 10000);
+
+        // create a render and set the size
+        var renderer = new THREE.WebGLRenderer();
+        renderer.setClearColorHex();
+        renderer.setClearColor(new THREE.Color(0xeeeeee));
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMapEnabled = true;
+
+        var orbitControls = new THREE.OrbitControls(camera);
+        orbitControls.autoRotate = false;
+        var clock = new THREE.Clock();
+
+        var projector = new THREE.Projector();
+        document.addEventListener('mousedown', onDocumentMouseDown, false);
+        //document.addEventListener('mousemove', onDocumentMouseMove, false);
+
+        // create the ground plane
+        var planeGeometry = new THREE.PlaneGeometry(500, 500);
+        var planeMaterial = new THREE.MeshBasicMaterial({color: 0xaaaaaa});
+        var plane = new THREE.Mesh(planeGeometry, planeMaterial);
+        plane.receiveShadow = true;
+
+        var planeGeometry2 = new THREE.PlaneGeometry(150, 100);
+        var planeMaterial2 = new THREE.MeshBasicMaterial({color: 0xdddddd});
+        var plane2 = new THREE.Mesh(planeGeometry2, planeMaterial2);
+
+        var planeGeometry2_1 = new THREE.PlaneGeometry(150, 100);
+        var planeMaterial2_1 = new THREE.MeshBasicMaterial({color: 0xdddddd});
+        var plane2_1 = new THREE.Mesh(planeGeometry2_1, planeMaterial2_1);
+
+        // rotate and position the plane
+        plane.rotation.x = -0.5 * Math.PI;
+        plane.position.x = 15;
+        plane.position.y = 0;
+        plane.position.z = 0;
+        scene.add(plane);
+
+        // rotate and position the plane
+        plane2.rotation.x = -0.5* Math.PI;
+        plane2.rotation.y = 0.5* Math.PI;
+        plane2.position.x = 0;
+        plane2.position.y = 100;
+        plane2.position.z = 50;
+        scene.add(plane2);
+        plane2_1.rotation.x = -0.5* Math.PI;
+        plane2_1.rotation.y = 0.5* Math.PI;
+        plane2_1.position.x = 0;
+        plane2_1.position.y = 100;
+        plane2_1.position.z = -55;
+        scene.add(plane2_1);
+        
+        var cplane3x = 0;
+        var cplane3y = 0;
+        var planey = 150;
+        
+        var spotLight = new THREE.SpotLight(0xffffff);
+        spotLight.position.set(620, 120, 10);
+        scene.add(spotLight);
+        //var light = new THREE.DirectionalLight();
+        //light.position.set(100, 30, 20);
+        //scene.add(light);
+
+        function setPlanePosition(obj) {
+            if(cplane3x<=5) {
+                if(cplane3x % 2 == 0) {
+                    if(cplane3y % 2 == 0 && cplane3x>=2) {
+                       planey -= 45
+                    }
+                    obj.position.set(
+                        1,
+                        planey,
+                        80
+                    );
+                } else {
+                    obj.position.set(
+                        1,
+                        planey,
+                        30
+                    );
+                }
+            }
+            else {
+                if(cplane3x == 6) {planey=150; }
+                if(cplane3x % 2 == 0) {
+                    if(cplane3y % 2 == 0 && cplane3x>=7) {
+                       planey -= 45
+                    }
+                    obj.position.set(
+                        1,
+                        planey,
+                        -25
+                    );
+                } else {
+                    obj.position.set(
+                        1,
+                        planey,
+                        -75
+                    );
+                }
+            }
+            cplane3x+=1;
+            obj.rotation.set(
+                -0.5*Math.PI,
+                0.5* Math.PI,
+                0
+            );
+            obj.castShadow = true;
+        }
+
+        var controls = new function() {
+            this.numberOfObjects = scene.children.length;
+            this.showRay = false;
+
+            this.addPlaneMesh = function () {
+                if (scene.children.length >= 16){
+                    alert("더이상 추가할 수 없습니다.");
+                }
+                else {
+                    var plane3 = createMesh(new THREE.PlaneGeometry(35,30),"floor-wood.jpg");
+                    plane3.material.needsUpdate = true;
+                    setPlanePosition(plane3);
+                    scene.add(plane3);
+                   
+                    plane3.name = "plane3_" + scene.children.length;
+                    this.numberOfObjects = scene.children.length;
+                    console.log(plane3.name);
+                }
+            };
+            this.removePlane = function () {
+                
+                    var allChildren = scene.children;
+                    var lastObject = allChildren[allChildren.length -1];
+                    if(lastObject instanceof THREE.Mesh) {
+                        scene.remove(lastObject);
+                        this.numberOfObjects = scene.children.length;
+                    }else{
+                        alert("더이상 삭제할 수 없습니다.");
+                    }
+                    if(cplane3x>=1){ cplane3x-=1;};
+                    if(cplane3x==6){ planey=60;}else if(cplane3x % 2 == 0 && cplane3x!=0 && cplane3x>=2) { planey += 45 };
+                  
+            };
+        }
+        
+        function createMesh(geom, imageFile) {
+            var texture = THREE.ImageUtils.loadTexture("../assets/textures/general/" + imageFile);
+            var mat = new THREE.MeshPhongMaterial();
+            mat.map = texture;
+            texture.needsUpdate = true;
+            var mesh = new THREE.Mesh(geom, mat);
+            return mesh;
+        }
+        
+
+        // position and point the camera to the center of the scene
+        camera.position.x = 600;
+        camera.position.y = 100;
+        camera.position.z = 0;
+        camera.lookAt(scene.position);
+
+        // add the output of the renderer to the html element
+        document.getElementById("WebGL-output").appendChild(renderer.domElement);
+
+        var gui = new dat.GUI();
+        gui.add(controls, 'addPlaneMesh');
+        gui.add(controls, 'removePlane');
+        gui.add(controls, 'numberOfObjects').listen();
+
+        // render the scene
+        render();    
+
+        function render() {
+            stats.update();
+
+            //sphere.rotation.y=step+=0.01;
+            var delta = clock.getDelta();
+            orbitControls.update(delta);
+
+            // render using requestAnimationFrame
+            requestAnimationFrame(render);
+            renderer.render(scene, camera);
+            
+        }
+
+        var projector = new THREE.Projector();
+        var tube;
+        function onDocumentMouseDown(event) {
+
+            var vector = new THREE.Vector3(( event.clientX / window.innerWidth ) * 2 - 1, -( event.clientY / window.innerHeight ) * 2 + 1, 0.5);
+            vector = vector.unproject(camera);
+
+            var raycaster = new THREE.Raycaster(camera.position, vector.sub(camera.position).normalize());
+
+            var intersects = raycaster.intersectObjects(scene.children);
+            
+            //const textureLoader = new THREE.TextureLoader()
+            //textureLoader.crossOrigin = "Anonymous"
+            //const myTexture = textureLoader.load(pname);
+
+            if (intersects.length > 0) {
+                pname = intersects[0].object;
+                console.log(pname);
+                //intersects[0].object.material.map =  THREE.ImageUtils.loadTexture(pname);
+                //pname.material.map =  THREE.ImageUtils.loadTexture(pname2);
+            }
+        }
+
+        /*
+        function onDocumentMouseMove(event) {
+            if (controls.showRay) {
+                var vector = new THREE.Vector3(( event.clientX / window.innerWidth ) * 2 - 1, -( event.clientY / window.innerHeight ) * 2 + 1, 0.5);
+                vector = vector.unproject(camera);
+
+                var raycaster = new THREE.Raycaster(camera.position, vector.sub(camera.position).normalize());
+                var intersects = raycaster.intersectObjects(scene.children);
+                
+                if (intersects.length > 0) {
+
+                    var points = [];
+                    points.push(new THREE.Vector3(-30, 39.8, 30));
+                    points.push(intersects[0].point);
+
+                    var mat = new THREE.MeshBasicMaterial({color: 0xff0000, transparent: true, opacity: 0.6});
+                    var tubeGeometry = new THREE.TubeGeometry(new THREE.SplineCurve3(points), 60, 0.001);
+
+                    if (tube) scene.remove(tube);
+
+                    if (controls.showRay) {
+                        tube = new THREE.Mesh(tubeGeometry, mat);
+                        scene.add(tube);
+                    }
+                }
+            }
+        }
+        */
+
+        function initStats() {
+
+            var stats = new Stats();
+            stats.setMode(0); // 0: fps, 1: ms
+            
+            // Align top-left
+            stats.domElement.style.position = 'absolute';
+            stats.domElement.style.left = '0px';
+            stats.domElement.style.top = '0px';
+
+            //프레임 ui
+            //document.getElementById("Stats-output").appendChild(stats.domElement);
+
+            return stats;
+        }
+        
+    }
+    window.onload = init;
+</script>
+</body>
+</html>
