@@ -1,6 +1,10 @@
 import { DefaultTheme } from "styled-components";
 
 export const them: DefaultTheme = {
+    white: {
+        lighter: "#f5f6fa",
+        normal: "#ffffff",
+    },
     yellow: "#ffd050",
     gray: {
         very: "rgba(0,0,0,0.3)",

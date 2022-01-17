@@ -50,7 +50,7 @@ const Circle = styled(motion.div)<{ isClicked: boolean }>`
     height: 10px;
     border-radius: 5px;
     background-color: ${(props) =>
-        props.isClicked ? (props) => props.theme.yellow : "white"};
+        props.isClicked ? (props) => "black" : "white"};
     cursor: pointer;
 `;
 
@@ -146,7 +146,7 @@ function Main() {
                                     exit="exit"
                                     transition={{ type: "tween" }}
                                 >
-                                    <Album key={index} album={albums[index]} />
+                                    <Album album={albums[index]} />
                                 </Slider>
                             </AnimatePresence>
                             <ButtonArrow
@@ -173,19 +173,19 @@ function Main() {
                                 {albums.map((value, curIndex) =>
                                     curIndex === index ? (
                                         <Circle
-                                            isClicked={curIndex === index}
                                             key={curIndex}
+                                            isClicked={curIndex === index}
                                             onClick={() =>
                                                 onClickSelect(curIndex)
                                             }
                                         />
                                     ) : (
                                         <Circle
+                                            key={curIndex}
                                             isClicked={curIndex === index}
                                             onClick={() =>
                                                 onClickSelect(curIndex)
                                             }
-                                            key={curIndex}
                                         />
                                     )
                                 )}

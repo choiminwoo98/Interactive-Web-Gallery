@@ -14,6 +14,7 @@ export const Button = styled.div`
     line-height: 37px;
     vertical-align: top;
     font-size: 12px;
+    font-weight: 600;
     background-color: ${(props) => props.theme.yellow};
 `;
 
@@ -44,7 +45,7 @@ export const ButtonGroup = styled.div`
     gap: 15px;
 `;
 
-export const InputColumn = styled.div<{ messageWidth?: string }>`
+export const InputColumn = styled.div`
     display: flex;
     flex-direction: column;
     gap: 5px;
@@ -54,11 +55,13 @@ export const InputColumn = styled.div<{ messageWidth?: string }>`
         width: 100%;
         padding: 12px 8px;
         border: none;
-        border-bottom: 3px solid ${(props) => props.theme.gray.normal};
+        border-bottom: 3px solid ${(props) => props.theme.white.lighter};
         background: none;
         border-radius: 2px;
         &::placeholder {
-            color: ${(props) => props.theme.gray.very};
+            color: rgba(0, 0, 0, 0.4);
+            font-weight: 600;
+            font-size: 16px;
         }
     }
 
@@ -67,12 +70,16 @@ export const InputColumn = styled.div<{ messageWidth?: string }>`
         height: 100px;
         border: 1px solid silver;
         border-radius: 4px;
+        &::placeholder {
+            color: rgba(0, 0, 0, 0.4);
+            font-weight: 600;
+        }
     }
 
     span {
-        width: ${(props) => (props.messageWidth ? props.messageWidth : "auto")};
         display: flex;
         justify-content: center;
+        text-align: center;
         font-size: 12px;
         font-weight: bold;
     }

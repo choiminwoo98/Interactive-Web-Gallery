@@ -15,7 +15,6 @@ import {
 const JoinForm = styled.form`
     border-bottom: 1px solid silver;
     padding: 10px 35px;
-    /* background: #ffe500; */
     overflow: hidden;
 `;
 
@@ -51,28 +50,26 @@ function Join() {
             ) : (
                 <JoinForm onSubmit={handleSubmit(onValid)}>
                     <InputGroup>
-                        <InputColumn messageWidth={"300px"}>
+                        <InputColumn>
                             <input
                                 {...register("email", {
                                     required: "이메일 입력은 필수입니다.",
                                 })}
                                 placeholder="이메일"
-                                size={15}
                             />
                             <ErrorMessage>{errors.email?.message}</ErrorMessage>
                         </InputColumn>
-                        <InputColumn messageWidth={"300px"}>
+                        <InputColumn>
                             <input
                                 {...register("nick", {
                                     required: "닉네임 입력은 필수입니다.",
                                 })}
                                 placeholder="닉네임"
-                                size={15}
                             />
 
                             <ErrorMessage>{errors.nick?.message}</ErrorMessage>
                         </InputColumn>
-                        <InputColumn messageWidth={"230px"}>
+                        <InputColumn>
                             <input
                                 {...register("password", {
                                     required: "비밀번호 입력은 필수입니다.",
@@ -90,7 +87,7 @@ function Join() {
                                 {errors.password?.message}
                             </ErrorMessage>
                         </InputColumn>
-                        <InputColumn messageWidth={"230px"}>
+                        <InputColumn>
                             <input
                                 {...register("passwordCheck", {
                                     validate: {

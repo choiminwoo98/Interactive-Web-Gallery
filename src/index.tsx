@@ -37,6 +37,7 @@ footer, header, hgroup, main, menu, nav, section {
 *[hidden] {
     display: none;
 }
+
 body {
   line-height: 1;
 }
@@ -59,6 +60,19 @@ table {
   box-sizing: border-box;
   font-family: 'Noto Sans KR', sans-serif;
 }
+
+#root{
+  width: 100%;
+  height: 100%;
+  position: relative;
+  @media screen and (min-width: 800px) {
+        & {
+            width: 800px;
+            margin: 0 auto;
+        }
+  }
+}
+
 input,
 textarea{
   outline: none;

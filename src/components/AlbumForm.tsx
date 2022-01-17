@@ -29,6 +29,8 @@ function AlbumForm() {
         formState: { errors },
     } = useForm<IAlbum>();
     const onValid = (data: IAlbum) => {
+        data["photos"] = [];
+        data["id"] = Date.now();
         data["createdAt"] = new Date().toLocaleDateString();
         setAlbums((prev) => [data, ...prev]);
 
@@ -42,18 +44,17 @@ function AlbumForm() {
             {isLogged && (
                 <Form onSubmit={handleSubmit(onValid)}>
                     <InputGroup>
-                        <InputColumn messageWidth={"300px"}>
+                        <InputColumn>
                             <input
                                 {...register("name", {
                                     required: "앨범 이름 입력은 필수입니다.",
                                 })}
-                                size={15}
                                 placeholder="앨범 이름"
                             />
 
                             <ErrorMessage>{errors.name?.message}</ErrorMessage>
                         </InputColumn>
-                        <InputColumn messageWidth="120px">
+                        <InputColumn>
                             <textarea
                                 {...register("description")}
                                 placeholder="소개글 작성"
@@ -62,7 +63,7 @@ function AlbumForm() {
                                 {errors.description?.message}
                             </ErrorMessage>
                         </InputColumn>
-                        <InputColumn messageWidth={"320px"}>
+                        <InputColumn>
                             <input
                                 {...register("password", {
                                     maxLength: {
@@ -71,7 +72,6 @@ function AlbumForm() {
                                             "앨범 비밀번호는 최대 8자 이내입니다.",
                                     },
                                 })}
-                                size={8}
                                 type="password"
                                 placeholder="비밀번호"
                             />

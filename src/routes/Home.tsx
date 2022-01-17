@@ -12,13 +12,6 @@ const Container = styled.div`
     display: grid;
     grid-template-columns: 1fr 2fr;
     justify-content: center;
-    margin: 10px 0px;
-    @media screen and (min-width: 800px) {
-        & {
-            width: 800px;
-            margin: 0 auto;
-        }
-    }
 `;
 
 const ProfileArea = styled.div`

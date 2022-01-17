@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
+import { Button } from "../styles";
 import { IAlbum } from "../types";
 
 const Wrapper = styled(motion.div)`
@@ -60,24 +61,6 @@ const Description = styled.p`
     overflow-y: auto;
 `;
 
-const Open = styled.div`
-    width: 60px;
-    height: 30px;
-    align-self: center;
-    border-radius: 8px;
-    background-color: white;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    a {
-        width: 100%;
-        height: 100%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-`;
-
 const wrapperVariants = {
     hidden: {
         opacity: 0,
@@ -95,6 +78,16 @@ interface IValue {
 }
 
 function Album({ album }: IValue) {
+    const navigate = useNavigate();
+    const onClick = () => {
+        if (album.password && prompt("비밀번호 입력", "") !== album.password) {
+            alert("비밀번호가 틀렸습니다. 다시 시도해주세요");
+            return;
+        }
+        navigate(`/album/${album.id}`, {
+            state: { isCheck: true },
+        });
+    };
     return (
         <Wrapper variants={wrapperVariants}>
             <BookCover>
@@ -112,9 +105,7 @@ function Album({ album }: IValue) {
                 <Title>{album.name}</Title>
                 <CreateAt>{album.createdAt}</CreateAt>
                 <Description>{album.description}</Description>
-                <Open>
-                    <Link to="/">열기</Link>
-                </Open>
+                <Button onClick={onClick}>열기</Button>
             </Overview>
         </Wrapper>
     );
