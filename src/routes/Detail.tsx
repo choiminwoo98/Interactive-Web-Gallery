@@ -7,13 +7,13 @@ import {
     useNavigate,
     useParams,
 } from "react-router-dom";
-import { useRecoilValue } from "recoil";
+import { useRecoilState } from "recoil";
 import styled from "styled-components";
 import { albumState } from "../atom";
 import BigPhoto from "../components/BigPhoto";
 import Board from "../components/Board";
+import NotFound from "../components/NotFound";
 import PhotoForm from "../components/PhotoForm";
-import { IPhoto } from "../types";
 
 const Wrapper = styled.div`
     width: 100%;
@@ -40,72 +40,62 @@ interface IState {
     };
 }
 
-interface IPhotoList {
-    [key: string]: IPhoto[];
-}
-
 function Detail() {
+    const [isNotFound, setIsNotFound] = useState(false);
     const { albumId } = useParams();
     const { state } = useLocation() as IState;
     const bigPhotoMatch = useMatch(`/album/${albumId}/:photoId`);
-    const [photoList, setPhotoList] = useState<IPhotoList>({
-        left: [],
-        right: [],
-    });
-
     const navigate = useNavigate();
-    const albums = useRecoilValue(albumState);
+    const [albums, setAlbums] = useRecoilState(albumState);
+    const [albumIndex] = useState(
+        albums.findIndex((album) => String(album.id) === albumId)
+    );
     const clickedPhoto =
         albumId &&
         bigPhotoMatch?.params.photoId &&
-        albums
-            .find((album) => String(album.id) === albumId)
-            ?.photos.find(
-                (movie) => String(movie.id) === bigPhotoMatch?.params.photoId
-            );
+        albums[albumIndex]?.photos.find(
+            (movie) => String(movie.id) === bigPhotoMatch?.params.photoId
+        );
     const onOverlayClick = () =>
         navigate(`/album/${albumId}`, { replace: true });
+    const changeIndex = (droppableId: string, index: number) => {
+        if (droppableId === "left") return index * 2;
+        else return index + 1;
+    };
     const onDragEnd = (info: DropResult) => {
         const { destination, source } = info;
         if (!destination) return;
-        if (destination.droppableId === source.droppableId) {
-            setPhotoList((allBoards) => {
-                const boardCopy = [...allBoards[source.droppableId]];
-                const taskObj = boardCopy[source.index];
-                boardCopy.splice(source.index, 1);
-                boardCopy.splice(destination?.index, 0, taskObj);
-                return {
-                    ...allBoards,
-                    [source.droppableId]: boardCopy,
-                };
-            });
-        }
-        if (destination.droppableId !== source.droppableId) {
-            setPhotoList((allBoards) => {
-                const sourceBoard = [...allBoards[source.droppableId]];
-                const taskObj = sourceBoard[source.index];
-                const destinationBoard = [
-                    ...allBoards[destination.droppableId],
-                ];
-                sourceBoard.splice(source.index, 1);
-                destinationBoard.splice(destination?.index, 0, taskObj);
-                return {
-                    ...allBoards,
-                    [source.droppableId]: sourceBoard,
-                    [destination.droppableId]: destinationBoard,
-                };
-            });
-        }
+        setAlbums((allAlbums) => {
+            const allAlbumsCopy = [...allAlbums];
+            const albumCopy = { ...allAlbumsCopy[albumIndex] };
+            const photosCopy = [...albumCopy.photos];
+            const sourceIndex = changeIndex(source.droppableId, source.index);
+            const destinationIndex = changeIndex(
+                destination.droppableId,
+                destination.index
+            );
+
+            const sourceObj = photosCopy[sourceIndex];
+
+            photosCopy.splice(sourceIndex, 1);
+            photosCopy.splice(destinationIndex, 0, sourceObj);
+
+            albumCopy.photos = photosCopy;
+
+            allAlbumsCopy.splice(albumIndex, 1);
+            allAlbumsCopy.splice(albumIndex, 0, albumCopy);
+
+            return [...allAlbumsCopy];
+        });
     };
     useEffect(() => {
-        const album = albums.find((album) => String(album.id) === albumId);
-        if (!albumId || !album) {
-            alert("정상적인 경로로 진입해주세요!");
-            return navigate("/");
-        } else if (album.password && !state.isCheck) {
+        if (!albumId || albumIndex === -1) {
+            return setIsNotFound(true);
+        } else if (albums[albumIndex].password && !state.isCheck) {
             let isWrong = true;
             do {
-                isWrong = prompt("비밀번호 입력", "") !== album.password;
+                isWrong =
+                    prompt("비밀번호 입력", "") !== albums[albumIndex].password;
             } while (
                 isWrong &&
                 window.confirm("비밀번호가 틀렸습니다. 다시 시도하겠습니까?")
@@ -115,42 +105,61 @@ function Detail() {
                 return navigate(-1);
             }
         }
-        setPhotoList({
-            left: album.photos.filter((photo, index) => index % 2 === 0),
-            right: album.photos.filter((photo, index) => index % 2 !== 0),
-        });
-    }, [albumId, navigate, state, albums]);
+    }, [albumId, navigate, state, albums, albumIndex]);
     return (
         <>
-            <Wrapper>
-                <PhotoForm albumId={albumId || ""} />
-                <DragDropContext onDragEnd={onDragEnd}>
-                    <AnimatePresence>
-                        {Object.keys(photoList).map((boardId) => (
-                            <Board
-                                boardId={boardId}
-                                key={boardId}
-                                photos={photoList[boardId]}
-                            />
-                        ))}
+            {(bigPhotoMatch && !clickedPhoto) || isNotFound ? (
+                <NotFound />
+            ) : (
+                <>
+                    <Wrapper>
+                        <PhotoForm albumId={albumId || ""} />
+                        <DragDropContext onDragEnd={onDragEnd}>
+                            <AnimatePresence>
+                                <Board
+                                    boardId="left"
+                                    key="left"
+                                    photos={
+                                        albums[albumIndex]
+                                            ? albums[albumIndex].photos.filter(
+                                                  (photo, index) =>
+                                                      photo && index % 2 === 0
+                                              )
+                                            : []
+                                    }
+                                />
+                                <Board
+                                    boardId="right"
+                                    key="right"
+                                    photos={
+                                        albums[albumIndex]
+                                            ? albums[albumIndex].photos.filter(
+                                                  (photo, index) =>
+                                                      photo && index % 2 !== 0
+                                              )
+                                            : []
+                                    }
+                                />
+                            </AnimatePresence>
+                        </DragDropContext>
+                    </Wrapper>
+                    <AnimatePresence exitBeforeEnter={false}>
+                        {bigPhotoMatch && (
+                            <>
+                                <Overlay
+                                    onClick={onOverlayClick}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                />
+                                <BigPhoto
+                                    photoId={bigPhotoMatch.params.photoId}
+                                    photo={clickedPhoto || undefined}
+                                />
+                            </>
+                        )}
                     </AnimatePresence>
-                </DragDropContext>
-            </Wrapper>
-            <AnimatePresence>
-                {bigPhotoMatch && (
-                    <>
-                        <Overlay
-                            onClick={onOverlayClick}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                        />
-                        <BigPhoto
-                            photoId={bigPhotoMatch.params.photoId}
-                            photo={clickedPhoto || undefined}
-                        />
-                    </>
-                )}
-            </AnimatePresence>
+                </>
+            )}
         </>
     );
 }
