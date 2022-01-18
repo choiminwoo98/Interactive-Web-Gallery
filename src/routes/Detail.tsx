@@ -21,7 +21,7 @@ const Wrapper = styled.div`
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     padding: 10px 0px;
-    margin-bottom: 400px;
+    padding-bottom: 400px;
 `;
 
 const Overlay = styled(motion.div)`
@@ -65,20 +65,26 @@ function Detail() {
     const onDragEnd = (info: DropResult) => {
         const { destination, source } = info;
         if (!destination) return;
+        const sourceIndex = changeIndex(source.droppableId, source.index);
+        const destinationIndex = changeIndex(
+            destination.droppableId,
+            destination.index
+        );
+        if (sourceIndex === destinationIndex) return;
         setAlbums((allAlbums) => {
             const allAlbumsCopy = [...allAlbums];
             const albumCopy = { ...allAlbumsCopy[albumIndex] };
             const photosCopy = [...albumCopy.photos];
-            const sourceIndex = changeIndex(source.droppableId, source.index);
-            const destinationIndex = changeIndex(
-                destination.droppableId,
-                destination.index
+
+            console.log(photosCopy);
+            console.log(
+                `sourceIndex: ${sourceIndex}, destinationIndex: ${destinationIndex}`
             );
 
-            const sourceObj = photosCopy[sourceIndex];
-
-            photosCopy.splice(sourceIndex, 1);
-            photosCopy.splice(destinationIndex, 0, sourceObj);
+            [photosCopy[sourceIndex], photosCopy[destinationIndex]] = [
+                photosCopy[destinationIndex],
+                photosCopy[sourceIndex],
+            ];
 
             albumCopy.photos = photosCopy;
 
@@ -116,30 +122,26 @@ function Detail() {
                         <PhotoForm albumId={albumId || ""} />
                         <DragDropContext onDragEnd={onDragEnd}>
                             <AnimatePresence>
-                                <Board
-                                    boardId="left"
-                                    key="left"
-                                    photos={
-                                        albums[albumIndex]
-                                            ? albums[albumIndex].photos.filter(
-                                                  (photo, index) =>
-                                                      photo && index % 2 === 0
-                                              )
-                                            : []
-                                    }
-                                />
-                                <Board
-                                    boardId="right"
-                                    key="right"
-                                    photos={
-                                        albums[albumIndex]
-                                            ? albums[albumIndex].photos.filter(
-                                                  (photo, index) =>
-                                                      photo && index % 2 !== 0
-                                              )
-                                            : []
-                                    }
-                                />
+                                {["left", "right"].map((value) => (
+                                    <Board
+                                        boardId={value}
+                                        key={value}
+                                        photos={
+                                            albums[albumIndex]
+                                                ? albums[
+                                                      albumIndex
+                                                  ].photos.filter(
+                                                      (photo, index) =>
+                                                          photo &&
+                                                          index % 2 ===
+                                                              (value === "left"
+                                                                  ? 0
+                                                                  : 1)
+                                                  )
+                                                : []
+                                        }
+                                    />
+                                ))}
                             </AnimatePresence>
                         </DragDropContext>
                     </Wrapper>

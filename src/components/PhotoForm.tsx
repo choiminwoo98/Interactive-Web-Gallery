@@ -96,7 +96,7 @@ function PhotoForm({ albumId }: IParams) {
             } else {
                 newObj["hashTags"] = [];
             }
-            albumCopy.photos = [newObj, ...albumCopy.photos];
+            albumCopy.photos = [...albumCopy.photos, newObj];
 
             allAlbums.splice(albumIndex, 1);
             allAlbums.splice(albumIndex, 0, albumCopy);

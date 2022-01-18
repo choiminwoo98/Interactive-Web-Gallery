@@ -1,7 +1,8 @@
 import { motion } from "framer-motion";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
-import { Button } from "../styles";
+import { Button, InputColumn } from "../styles";
 import { IAlbum } from "../types";
 
 const Wrapper = styled(motion.div)`
@@ -78,12 +79,16 @@ interface IValue {
 }
 
 function Album({ album }: IValue) {
+    const [password, setPassword] = useState("");
     const navigate = useNavigate();
+    const onChange = ({ target }: React.ChangeEvent<HTMLInputElement>) =>
+        setPassword(target.value);
     const onClick = () => {
-        if (album.password && prompt("비밀번호 입력", "") !== album.password) {
+        if (album.password && password !== album.password) {
             alert("비밀번호가 틀렸습니다. 다시 시도해주세요");
             return;
         }
+        setPassword("");
         navigate(`/album/${album.id}`, {
             state: { isCheck: true },
         });
@@ -105,6 +110,16 @@ function Album({ album }: IValue) {
                 <Title>{album.name}</Title>
                 <CreateAt>{album.createdAt}</CreateAt>
                 <Description>{album.description}</Description>
+                {album.password && (
+                    <InputColumn>
+                        <input
+                            value={password}
+                            onChange={onChange}
+                            type="password"
+                            placeholder="비밀번호 입력"
+                        />
+                    </InputColumn>
+                )}
                 <Button onClick={onClick}>열기</Button>
             </Overview>
         </Wrapper>

@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import React from "react";
-import { Draggable } from "react-beautiful-dnd";
+import { Draggable, DraggableStateSnapshot } from "react-beautiful-dnd";
 import { useLocation, useNavigate } from "react-router-dom";
 import styled from "styled-components";
 
@@ -28,6 +28,17 @@ interface IParams {
     photoId: number;
     imagePath: string;
 }
+
+function getStyle(style: any, snapshot: DraggableStateSnapshot) {
+    if (!snapshot.isDropAnimating) {
+        return style;
+    }
+    return {
+        ...style,
+        transitionDuration: `0.001s`,
+    };
+}
+
 function DraggableCard({ index, photoId, imagePath }: IParams) {
     const navigate = useNavigate();
     const location = useLocation();
@@ -41,8 +52,9 @@ function DraggableCard({ index, photoId, imagePath }: IParams) {
                     ref={magic.innerRef}
                     {...magic.dragHandleProps}
                     {...magic.draggableProps}
+                    style={getStyle(magic.draggableProps.style, snapshot)}
                 >
-                    {snapshot.isDragging || snapshot.isDropAnimating ? (
+                    {snapshot.isDragging ? (
                         <Card
                             onClick={() => onCardClick(photoId)}
                             imagePath={imagePath}
