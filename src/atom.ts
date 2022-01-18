@@ -10,3 +10,8 @@ export const albumState = atom<IAlbum[]>({
     key: "albums",
     default: [],
 });
+
+export const checkState = atom({
+    key: "isCheck",
+    default: false,
+});

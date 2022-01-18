@@ -1,7 +1,9 @@
 import { motion } from "framer-motion";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useSetRecoilState } from "recoil";
 import styled from "styled-components";
+import { checkState } from "../atom";
 import { Button, InputColumn } from "../styles";
 import { IAlbum } from "../types";
 
@@ -81,6 +83,7 @@ interface IValue {
 function Album({ album }: IValue) {
     const [password, setPassword] = useState("");
     const navigate = useNavigate();
+    const setIsCheck = useSetRecoilState(checkState);
     const onChange = ({ target }: React.ChangeEvent<HTMLInputElement>) =>
         setPassword(target.value);
     const onClick = () => {
@@ -89,6 +92,7 @@ function Album({ album }: IValue) {
             return;
         }
         setPassword("");
+        setIsCheck(true);
         navigate(`/album/${album.id}`, {
             state: { isCheck: true },
         });

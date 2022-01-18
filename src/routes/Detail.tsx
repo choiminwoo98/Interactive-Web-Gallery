@@ -9,7 +9,7 @@ import {
 } from "react-router-dom";
 import { useRecoilState } from "recoil";
 import styled from "styled-components";
-import { albumState } from "../atom";
+import { albumState, checkState } from "../atom";
 import BigPhoto from "../components/BigPhoto";
 import Board from "../components/Board";
 import NotFound from "../components/NotFound";
@@ -46,10 +46,12 @@ function Detail() {
     const { state } = useLocation() as IState;
     const bigPhotoMatch = useMatch(`/album/${albumId}/:photoId`);
     const navigate = useNavigate();
+    const [isCheck, setIsCheck] = useRecoilState(checkState);
     const [albums, setAlbums] = useRecoilState(albumState);
-    const [albumIndex] = useState(
-        albums.findIndex((album) => String(album.id) === albumId)
+    const albumIndex = albums.findIndex(
+        (album) => String(album.id) === albumId
     );
+
     const clickedPhoto =
         albumId &&
         bigPhotoMatch?.params.photoId &&
@@ -57,10 +59,12 @@ function Detail() {
             (movie) => String(movie.id) === bigPhotoMatch?.params.photoId
         );
     const onOverlayClick = () =>
-        navigate(`/album/${albumId}`, { replace: true });
+        navigate(`/album/${albumId}`, {
+            replace: true,
+        });
     const changeIndex = (droppableId: string, index: number) => {
         if (droppableId === "left") return index * 2;
-        else return index + 1;
+        else return index * 2 + 1;
     };
     const onDragEnd = (info: DropResult) => {
         const { destination, source } = info;
@@ -70,20 +74,23 @@ function Detail() {
             destination.droppableId,
             destination.index
         );
-        if (sourceIndex === destinationIndex) return;
+
+        if (albums[albumIndex].photos.length <= destinationIndex) return;
         setAlbums((allAlbums) => {
             const allAlbumsCopy = [...allAlbums];
             const albumCopy = { ...allAlbumsCopy[albumIndex] };
-            const photosCopy = [...albumCopy.photos];
+            const photosCopy = [...albumCopy.photos].filter(
+                (photo) => photo !== undefined
+            );
 
             console.log(photosCopy);
             console.log(
                 `sourceIndex: ${sourceIndex}, destinationIndex: ${destinationIndex}`
             );
 
-            [photosCopy[sourceIndex], photosCopy[destinationIndex]] = [
-                photosCopy[destinationIndex],
+            [photosCopy[destinationIndex], photosCopy[sourceIndex]] = [
                 photosCopy[sourceIndex],
+                photosCopy[destinationIndex],
             ];
 
             albumCopy.photos = photosCopy;
@@ -97,7 +104,10 @@ function Detail() {
     useEffect(() => {
         if (!albumId || albumIndex === -1) {
             return setIsNotFound(true);
-        } else if (albums[albumIndex].password && !state.isCheck) {
+        } else if (
+            albums[albumIndex].password &&
+            !(state?.isCheck || isCheck)
+        ) {
             let isWrong = true;
             do {
                 isWrong =
@@ -110,8 +120,9 @@ function Detail() {
             if (isWrong) {
                 return navigate(-1);
             }
+            setIsCheck(true);
         }
-    }, [albumId, navigate, state, albums, albumIndex]);
+    }, [albumId, navigate, state, albums, albumIndex, setIsCheck, isCheck]);
     return (
         <>
             {(bigPhotoMatch && !clickedPhoto) || isNotFound ? (
@@ -121,28 +132,24 @@ function Detail() {
                     <Wrapper>
                         <PhotoForm albumId={albumId || ""} />
                         <DragDropContext onDragEnd={onDragEnd}>
-                            <AnimatePresence>
-                                {["left", "right"].map((value) => (
-                                    <Board
-                                        boardId={value}
-                                        key={value}
-                                        photos={
-                                            albums[albumIndex]
-                                                ? albums[
-                                                      albumIndex
-                                                  ].photos.filter(
-                                                      (photo, index) =>
-                                                          photo &&
-                                                          index % 2 ===
-                                                              (value === "left"
-                                                                  ? 0
-                                                                  : 1)
-                                                  )
-                                                : []
-                                        }
-                                    />
-                                ))}
-                            </AnimatePresence>
+                            {["left", "right"].map((value) => (
+                                <Board
+                                    boardId={value}
+                                    key={value}
+                                    photos={
+                                        albums[albumIndex]
+                                            ? albums[albumIndex].photos.filter(
+                                                  (photo, index) =>
+                                                      photo &&
+                                                      index % 2 ===
+                                                          (value === "left"
+                                                              ? 0
+                                                              : 1)
+                                              )
+                                            : []
+                                    }
+                                />
+                            ))}
                         </DragDropContext>
                     </Wrapper>
                     <AnimatePresence exitBeforeEnter={false}>

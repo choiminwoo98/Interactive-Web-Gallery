@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import React from "react";
-import { Draggable, DraggableStateSnapshot } from "react-beautiful-dnd";
+import { Draggable } from "react-beautiful-dnd";
 import { useLocation, useNavigate } from "react-router-dom";
 import styled from "styled-components";
 
@@ -18,25 +18,24 @@ const Card = styled(motion.div)<{ imagePath: string }>`
     background-position: center center;
     background-size: cover;
     border-radius: 15px;
+    position: relative;
     box-shadow: rgba(0, 0, 0, 0.3) 0px 19px 38px,
         rgba(0, 0, 0, 0.22) 0px 15px 12px;
     border-radius: 15px;
+`;
+
+const OverLay = styled(motion.div)`
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    left: 0;
+    top: 0;
 `;
 
 interface IParams {
     index: number;
     photoId: number;
     imagePath: string;
-}
-
-function getStyle(style: any, snapshot: DraggableStateSnapshot) {
-    if (!snapshot.isDropAnimating) {
-        return style;
-    }
-    return {
-        ...style,
-        transitionDuration: `0.001s`,
-    };
 }
 
 function DraggableCard({ index, photoId, imagePath }: IParams) {
@@ -47,25 +46,18 @@ function DraggableCard({ index, photoId, imagePath }: IParams) {
     };
     return (
         <Draggable draggableId={photoId + ""} index={index}>
-            {(magic, snapshot) => (
+            {(magic) => (
                 <CardWrapper
                     ref={magic.innerRef}
                     {...magic.dragHandleProps}
                     {...magic.draggableProps}
-                    style={getStyle(magic.draggableProps.style, snapshot)}
                 >
-                    {snapshot.isDragging ? (
-                        <Card
-                            onClick={() => onCardClick(photoId)}
-                            imagePath={imagePath}
-                        />
-                    ) : (
-                        <Card
-                            layoutId={photoId + ""}
-                            onClick={() => onCardClick(photoId)}
-                            imagePath={imagePath}
-                        />
-                    )}
+                    <Card
+                        onClick={() => onCardClick(photoId)}
+                        imagePath={imagePath}
+                    >
+                        <OverLay layoutId={photoId + ""} />
+                    </Card>
                 </CardWrapper>
             )}
         </Draggable>

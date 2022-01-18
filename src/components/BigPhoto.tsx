@@ -74,8 +74,8 @@ function BigPhoto({ photoId, photo }: IParams) {
         scrollY.onChange(() => {
             y.set(scrollY.get() + 100);
         });
+        y.set(scrollY.get() + 100);
     }, [scrollY, y]);
-    console.log(photo);
     return (
         <Wrapper layoutId={photoId} style={{ top: y }}>
             {photo && (

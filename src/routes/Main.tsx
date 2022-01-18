@@ -1,8 +1,8 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { useState } from "react";
-import { useRecoilValue } from "recoil";
+import { useEffect, useState } from "react";
+import { useRecoilState, useRecoilValue } from "recoil";
 import styled from "styled-components";
-import { albumState, isLoggedState } from "../atom";
+import { albumState, checkState, isLoggedState } from "../atom";
 import Album from "../components/Album";
 import AlbumForm from "../components/AlbumForm";
 
@@ -79,6 +79,7 @@ function Main() {
     const [index, setIndex] = useState(0);
     const [leaving, setLeaving] = useState(false);
     const [back, setBack] = useState(false);
+    const [isCheck, setIsCheck] = useRecoilState(checkState);
     const albums = useRecoilValue(albumState);
     const isLogged = useRecoilValue(isLoggedState);
     const toggleLeaving = () => setLeaving((prev) => !prev);
@@ -105,6 +106,9 @@ function Main() {
         }
         setIndex(curIndex);
     };
+    useEffect(() => {
+        if (isCheck) setIsCheck(false);
+    }, [isCheck, setIsCheck]);
     return (
         <>
             {isLogged && (
