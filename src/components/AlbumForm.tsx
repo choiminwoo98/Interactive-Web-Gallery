@@ -81,7 +81,13 @@ function AlbumForm() {
                         </InputColumn>
                         <InputColumn>
                             <input
-                                {...register("imagePath")}
+                                {...register("imagePath", {
+                                    pattern: {
+                                        value: /(http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-/]))?/g,
+                                        message:
+                                            "알맞은 URL 형식으로 입력하세요.",
+                                    },
+                                })}
                                 type="url"
                                 placeholder="이미지 경로"
                             />

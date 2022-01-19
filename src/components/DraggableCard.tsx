@@ -38,6 +38,23 @@ interface IParams {
     imagePath: string;
 }
 
+function getStyle(style: any, snapshot: any) {
+    if (!snapshot.isDropAnimating) {
+        return style;
+    }
+    const { moveTo, curve, duration } = snapshot.dropAnimation;
+    // move to the right spot
+    const translate = `translate(${moveTo.x}px, ${moveTo.y}px)`;
+
+    // patching the existing style
+    return {
+        ...style,
+        transform: `${translate}`,
+        // slowing down the drop because we can
+        transition: `all ${curve} ${duration + 0.1}s`,
+    };
+}
+
 function DraggableCard({ index, photoId, imagePath }: IParams) {
     const navigate = useNavigate();
     const location = useLocation();
@@ -46,11 +63,12 @@ function DraggableCard({ index, photoId, imagePath }: IParams) {
     };
     return (
         <Draggable draggableId={photoId + ""} index={index}>
-            {(magic) => (
+            {(magic, snapshot) => (
                 <CardWrapper
                     ref={magic.innerRef}
                     {...magic.dragHandleProps}
                     {...magic.draggableProps}
+                    style={getStyle(magic.draggableProps.style, snapshot)}
                 >
                     <Card
                         onClick={() => onCardClick(photoId)}

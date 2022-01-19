@@ -11,6 +11,7 @@ import {
     InputGroup,
 } from "../styles";
 import { IPhoto } from "../types";
+import ThreeDotsWave from "./ThreeDotsWave";
 
 const Wrapper = styled.div`
     width: 100%;
@@ -66,15 +67,39 @@ interface IForm {
 
 function PhotoForm({ albumId }: IParams) {
     const [imagePath, setImagePath] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
+    const [isValid, setIsValid] = useState(false);
     const [albums, setAlbums] = useRecoilState(albumState);
     const {
         register,
         handleSubmit,
         getValues,
         setValue,
+        setError,
         formState: { errors },
     } = useForm<IForm>();
     const onValid = (data: IForm) => {
+        if (isLoading) {
+            setError(
+                "url",
+                {
+                    message: "이미지를 불러오는 중 입니다.",
+                },
+                { shouldFocus: true }
+            );
+            return;
+        }
+        if (!isValid) {
+            setError(
+                "url",
+                {
+                    message: "이미지를 찾을 수 없습니다.",
+                },
+                { shouldFocus: true }
+            );
+            return;
+        }
+
         const newObj = {} as IPhoto;
         const albumIndex = albums.findIndex(
             (album) => String(album.id) === albumId
@@ -108,14 +133,40 @@ function PhotoForm({ albumId }: IParams) {
             setValue("description", "");
             setValue("hashTags", "");
             setValue("url", "");
+            setIsLoading(false);
+            setIsValid(false);
         }
     };
-    const onUrlBlur = () => setImagePath(getValues("url"));
+    const onUrlBlur = () => {
+        const img = new Image();
+        const url = getValues("url");
+        setIsLoading(true);
+
+        img.onload = () => {
+            setIsLoading(false);
+            setIsValid(true);
+            setImagePath(url);
+        };
+
+        img.onerror = () => {
+            setIsLoading(false);
+            setIsValid(false);
+            setImagePath(
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/No-Image-Placeholder.svg/1665px-No-Image-Placeholder.svg.png"
+            );
+        };
+
+        img.src = url;
+    };
     return (
         <Wrapper>
             <Form onSubmit={handleSubmit(onValid)}>
                 <PreviewWrap>
-                    <Preview imagePath={imagePath} />
+                    {isLoading ? (
+                        <ThreeDotsWave />
+                    ) : (
+                        <Preview imagePath={imagePath} />
+                    )}
                 </PreviewWrap>
                 <GroupWrap>
                     <InputGroup>
@@ -157,6 +208,11 @@ function PhotoForm({ albumId }: IParams) {
                             <input
                                 {...register("url", {
                                     required: "이미지 경로 입력은 필수입니다.",
+                                    pattern: {
+                                        value: /(http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-/]))?/g,
+                                        message:
+                                            "알맞은 URL 형식으로 입력하세요.",
+                                    },
                                 })}
                                 type="url"
                                 placeholder="이미지 경로"
