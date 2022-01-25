@@ -2,7 +2,8 @@ import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { useRecoilValue } from "recoil";
 import styled from "styled-components";
-import { isLoggedState } from "../atom";
+import { createUser } from "../api";
+import { cacheUserState } from "../atom";
 import {
     Button,
     ButtonGroup,
@@ -11,6 +12,7 @@ import {
     InputGroup,
     TimeLine,
 } from "../styles";
+import { checkLogin } from "../utils";
 
 const JoinForm = styled.form`
     border-bottom: 1px solid silver;
@@ -18,8 +20,15 @@ const JoinForm = styled.form`
     overflow: hidden;
 `;
 
+interface IForm {
+    email: string;
+    nick: string;
+    password: string;
+    passwordCheck: string;
+}
+
 function Join() {
-    const isLogged = useRecoilValue(isLoggedState);
+    const cacheUser = useRecoilValue(cacheUserState);
     const navigate = useNavigate();
     const {
         register,
@@ -28,7 +37,7 @@ function Join() {
         setError,
         getValues,
         formState: { errors },
-    } = useForm();
+    } = useForm<IForm>();
     watch(({ password, passwordCheck }) => {
         if (password !== passwordCheck) {
             setError("passwordCheck", {
@@ -39,13 +48,25 @@ function Join() {
             setError("passwordCheck", { message: "" });
         }
     });
-    const onValid = () => {
-        console.log("success");
+    const onValid = ({ email, nick, password }: IForm) => {
+        createUser({ email, nick, password })
+            .then(checkLogin)
+            .then((data) => {
+                if (data.code.startsWith("412") && data.result) {
+                    setError(data.result.input, { message: data.message });
+                } else {
+                    navigate("/");
+                }
+            })
+            .catch((error) => {
+                alert(error.message);
+                window.location.replace("/");
+            });
     };
 
     return (
         <TimeLine>
-            {isLogged ? (
+            {cacheUser ? (
                 <>{navigate("/")}</>
             ) : (
                 <JoinForm onSubmit={handleSubmit(onValid)}>

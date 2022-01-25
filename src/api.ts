@@ -11,6 +11,9 @@ const requrestApi = (addUrl: string, method: string, body?: string) =>
         credentials: "include",
     }).then((response) => response.json() as Promise<IResMessage>);
 
+export const createUser = (newUser: IUser) =>
+    requrestApi("user", "post", JSON.stringify(newUser));
+
 export const authLogin = (user: IAuthUser) =>
     requrestApi("auth/login", "post", JSON.stringify(user));
 
