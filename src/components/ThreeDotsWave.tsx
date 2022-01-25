@@ -3,6 +3,7 @@ import styled from "styled-components";
 
 const Wrapper = styled.div`
     width: 100%;
+    height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -10,8 +11,8 @@ const Wrapper = styled.div`
 
 const LoadingDot = styled(motion.span)`
     display: block;
-    width: 2rem;
-    height: 2rem;
+    width: 1rem;
+    height: 1rem;
     background-color: black;
     border-radius: 50%;
 `;

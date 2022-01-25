@@ -1,14 +1,23 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
+import { useQuery } from "react-query";
 import { useRecoilState, useRecoilValue } from "recoil";
 import styled from "styled-components";
-import { albumState, checkState, isLoggedState } from "../atom";
+import { getAlbums } from "../api";
+import { cacheUserState, checkState } from "../atom";
 import Album from "../components/Album";
 import AlbumForm from "../components/AlbumForm";
+import ThreeDotsWave from "../components/ThreeDotsWave";
+import { IAlbum } from "../types/model";
 
-const SliderWrap = styled.div`
+const BottomWrap = styled.div`
     grid-column: span 2;
     height: 300px;
+`;
+
+const SliderWrap = styled.div`
+    width: 100%;
+    height: 100%;
     position: relative;
     align-self: center;
     display: flex;
@@ -80,8 +89,20 @@ function Main() {
     const [leaving, setLeaving] = useState(false);
     const [back, setBack] = useState(false);
     const [isCheck, setIsCheck] = useRecoilState(checkState);
-    const albums = useRecoilValue(albumState);
-    const isLogged = useRecoilValue(isLoggedState);
+    const [albums, setAlbums] = useState<IAlbum[]>([]);
+    const cacheUser = useRecoilValue(cacheUserState);
+    const { isLoading, refetch } = useQuery(
+        ["albums", "curAlbums"],
+        getAlbums,
+        {
+            enabled: !!cacheUser,
+            onSuccess: (data) => {
+                if (data.result) {
+                    setAlbums(data.result.Albums);
+                }
+            },
+        }
+    );
     const toggleLeaving = () => setLeaving((prev) => !prev);
     const onClickIncrease = () => {
         if (leaving) return;
@@ -111,10 +132,12 @@ function Main() {
     }, [isCheck, setIsCheck]);
     return (
         <>
-            {isLogged && (
-                <>
-                    <AlbumForm />
-                    {albums.length !== 0 && (
+            <AlbumForm refetch={refetch} />
+            {cacheUser && (
+                <BottomWrap>
+                    {isLoading ? (
+                        <ThreeDotsWave />
+                    ) : (
                         <SliderWrap>
                             <ButtonArrow
                                 style={{ left: 0 }}
@@ -196,7 +219,7 @@ function Main() {
                             </CircleWrapper>
                         </SliderWrap>
                     )}
-                </>
+                </BottomWrap>
             )}
         </>
     );

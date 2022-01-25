@@ -1,6 +1,6 @@
 import { Droppable } from "react-beautiful-dnd";
 import styled from "styled-components";
-import { IPhoto } from "../types";
+import { IPhoto } from "../types/model";
 import DraggableCard from "./DraggableCard";
 
 const Col = styled.div`
@@ -21,14 +21,17 @@ function Board({ boardId, photos }: IParams) {
         <Droppable droppableId={boardId}>
             {(magic) => (
                 <Col ref={magic.innerRef} {...magic.droppableProps}>
-                    {photos.map((photo, index) => (
-                        <DraggableCard
-                            key={photo.id}
-                            index={index}
-                            photoId={photo.id}
-                            imagePath={photo.url}
-                        ></DraggableCard>
-                    ))}
+                    {photos.map(
+                        (photo, index) =>
+                            photo.id && (
+                                <DraggableCard
+                                    key={photo.id}
+                                    index={index}
+                                    photoId={photo.id}
+                                    imagePath={photo.url}
+                                ></DraggableCard>
+                            )
+                    )}
                     {magic.placeholder}
                 </Col>
             )}

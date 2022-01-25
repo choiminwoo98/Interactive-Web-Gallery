@@ -1,7 +1,9 @@
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
-import { useRecoilValue, useSetRecoilState } from "recoil";
+import { useRecoilValue } from "recoil";
 import styled from "styled-components";
-import { albumState, isLoggedState } from "../atom";
+import { createAlbum, uploadAlbumImage } from "../api";
+import { cacheUserState } from "../atom";
 import {
     Button,
     ButtonGroup,
@@ -10,7 +12,7 @@ import {
     InputGroup,
     TimeLine,
 } from "../styles";
-import { IAlbum } from "../types";
+import { checkLogin } from "../utils";
 
 const Form = styled.form`
     border-bottom: 1px solid silver;
@@ -19,30 +21,71 @@ const Form = styled.form`
     overflow: hidden;
 `;
 
-function AlbumForm() {
-    const isLogged = useRecoilValue(isLoggedState);
-    const setAlbums = useSetRecoilState(albumState);
+interface IForm {
+    name: string;
+    description?: string;
+    password?: string;
+    img?: FileList;
+}
+
+interface IParams {
+    refetch: any;
+}
+
+function AlbumForm({ refetch }: IParams) {
+    const cacheUser = useRecoilValue(cacheUserState);
+    const [url, setUrl] = useState<undefined | string>();
     const {
         register,
         handleSubmit,
-        setValue,
+        reset,
         formState: { errors },
-    } = useForm<IAlbum>();
-    const onValid = (data: IAlbum) => {
-        data["photos"] = [];
-        data["id"] = Date.now();
-        data["createdAt"] = new Date().toLocaleDateString();
-        setAlbums((prev) => [data, ...prev]);
-
-        setValue("name", "");
-        setValue("description", "");
-        setValue("password", "");
-        setValue("imagePath", "");
+    } = useForm<IForm>();
+    const onChange = (event: React.FormEvent<HTMLInputElement>) => {
+        const {
+            currentTarget: { files },
+        } = event;
+        if (files) {
+            const fd = new FormData();
+            fd.append("img", files[0]);
+            uploadAlbumImage(fd)
+                .then(checkLogin)
+                .then((data) => {
+                    if (!data) return;
+                    if (data.result) {
+                        setUrl(data.result.url);
+                    }
+                })
+                .catch((error) => {
+                    alert(error.message);
+                    window.location.replace("/");
+                });
+        }
+    };
+    const onValid = (data: IForm) => {
+        createAlbum({
+            name: data.name,
+            description: data.description,
+            password: data.password,
+            url,
+        })
+            .then(checkLogin)
+            .then(() => {
+                reset();
+                refetch();
+            })
+            .catch((error) => {
+                alert(error.message);
+                window.location.replace("/");
+            });
     };
     return (
         <TimeLine>
-            {isLogged && (
-                <Form onSubmit={handleSubmit(onValid)}>
+            {cacheUser && (
+                <Form
+                    onSubmit={handleSubmit(onValid)}
+                    encType="multipart/form-data"
+                >
                     <InputGroup>
                         <InputColumn>
                             <input
@@ -81,19 +124,12 @@ function AlbumForm() {
                         </InputColumn>
                         <InputColumn>
                             <input
-                                {...register("imagePath", {
-                                    pattern: {
-                                        value: /(http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-/]))?/g,
-                                        message:
-                                            "알맞은 URL 형식으로 입력하세요.",
-                                    },
+                                {...register("img", {
+                                    onChange: onChange,
                                 })}
-                                type="url"
-                                placeholder="이미지 경로"
+                                type="file"
+                                accept="image/*"
                             />
-                            <ErrorMessage>
-                                {errors.imagePath?.message}
-                            </ErrorMessage>
                         </InputColumn>
                     </InputGroup>
                     <ButtonGroup>

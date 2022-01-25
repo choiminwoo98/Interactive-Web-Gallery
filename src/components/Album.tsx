@@ -2,10 +2,15 @@ import { motion } from "framer-motion";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSetRecoilState } from "recoil";
+// import { useNavigate } from "react-router-dom";
+// import { useSetRecoilState } from "recoil";
 import styled from "styled-components";
+import { authAlbum } from "../api";
 import { checkState } from "../atom";
-import { Button, InputColumn } from "../styles";
-import { IAlbum } from "../types";
+// import { checkState } from "../atom";
+import { Button, ErrorMessage, InputColumn } from "../styles";
+import { IAlbum } from "../types/model";
+import { checkLogin } from "../utils";
 
 const Wrapper = styled(motion.div)`
     width: 100%;
@@ -76,37 +81,51 @@ const wrapperVariants = {
     },
 };
 
-interface IValue {
+interface IParams {
     album: IAlbum;
 }
 
-function Album({ album }: IValue) {
+function Album({ album }: IParams) {
     const [password, setPassword] = useState("");
-    const navigate = useNavigate();
+    const [pwdError, setPwdError] = useState("");
     const setIsCheck = useSetRecoilState(checkState);
+    const navigate = useNavigate();
     const onChange = ({ target }: React.ChangeEvent<HTMLInputElement>) =>
         setPassword(target.value);
     const onClick = () => {
-        if (album.password && password !== album.password) {
-            alert("비밀번호가 틀렸습니다. 다시 시도해주세요");
-            return;
+        if (album.id) {
+            let checked = true;
+            if (album.locked) {
+                authAlbum(album.id, password)
+                    .then(checkLogin)
+                    .then((data) => {
+                        if (data.code.startsWith("412")) {
+                            checked = false;
+                            setPwdError(data.message);
+                        }
+                    })
+                    .catch((error) => {
+                        alert(error.message);
+                        window.location.replace("/");
+                    });
+            }
+
+            if (checked) {
+                setPwdError("");
+                setPassword("");
+                setIsCheck(true);
+                navigate(`/detail/${album.id}`, {
+                    state: { isCheck: checked },
+                });
+            }
         }
-        setPassword("");
-        setIsCheck(true);
-        navigate(`/album/${album.id}`, {
-            state: { isCheck: true },
-        });
     };
     return (
         <Wrapper variants={wrapperVariants}>
             <BookCover>
                 <Book
                     style={{
-                        backgroundImage: `url(${
-                            album.imagePath
-                                ? album.imagePath
-                                : "https://blog.kakaocdn.net/dn/XlVZH/btqIH50as13/LwCnDkeRzRz9kETtUMaHyk/img.jpg"
-                        })`,
+                        backgroundImage: `url(${album.url})`,
                     }}
                 />
             </BookCover>
@@ -114,7 +133,7 @@ function Album({ album }: IValue) {
                 <Title>{album.name}</Title>
                 <CreateAt>{album.createdAt}</CreateAt>
                 <Description>{album.description}</Description>
-                {album.password && (
+                {album.locked && (
                     <InputColumn>
                         <input
                             value={password}
@@ -122,6 +141,7 @@ function Album({ album }: IValue) {
                             type="password"
                             placeholder="비밀번호 입력"
                         />
+                        <ErrorMessage>{pwdError}</ErrorMessage>
                     </InputColumn>
                 )}
                 <Button onClick={onClick}>열기</Button>

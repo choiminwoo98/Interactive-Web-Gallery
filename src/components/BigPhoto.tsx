@@ -1,7 +1,7 @@
 import { motion, useMotionValue, useViewportScroll } from "framer-motion";
 import { useEffect } from "react";
 import styled from "styled-components";
-import { IPhoto } from "../types";
+import { IPhoto } from "../types/model";
 
 const Wrapper = styled(motion.div)`
     position: absolute;
@@ -88,9 +88,9 @@ function BigPhoto({ photoId, photo }: IParams) {
                     <BigCover url={photo.url} />
                     <BigHashTag>
                         <span>
-                            {photo.hashTags
-                                .map((hashTag) => `#${hashTag}`)
-                                .join(" ")}
+                            {photo.Hashtags.map(
+                                (hashtag) => `#${hashtag}`
+                            ).join(" ")}
                         </span>
                     </BigHashTag>
                 </BigContainer>

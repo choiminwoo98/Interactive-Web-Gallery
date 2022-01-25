@@ -18,3 +18,11 @@ export const authLogin = (user: IAuthUser) =>
     requrestApi("auth/login", "post", JSON.stringify(user));
 
 export const getUser = () => requrestApi("user", "get");
+
+export const getAlbums = () => requrestApi(`album`, "get");
+
+export const createAlbum = (newAlbum: IAlbum) =>
+    requrestApi(`album`, "post", JSON.stringify(newAlbum));
+
+export const authAlbum = (albumId: number, password: string) =>
+    requrestApi(`auth/album/${albumId}`, "post", JSON.stringify({ password }));
