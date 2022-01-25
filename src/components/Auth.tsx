@@ -1,21 +1,64 @@
 import { useForm } from "react-hook-form";
-import { Link } from "react-router-dom";
-import { Button, ButtonGroup, InputColumn, InputGroup } from "../styles";
+import { useNavigate } from "react-router-dom";
+import { authLogin } from "../api";
+import {
+    Button,
+    ButtonGroup,
+    ErrorMessage,
+    InputColumn,
+    InputGroup,
+} from "../styles";
+import { checkLogin } from "../utils";
 
-function AuthForm() {
-    const { register, handleSubmit } = useForm();
-    const onValid = () => {};
+interface IForm {
+    account: string;
+    password: string;
+}
+
+interface IParams {
+    refetch: any;
+}
+
+function AuthForm({ refetch }: IParams) {
+    const {
+        register,
+        handleSubmit,
+        setError,
+        reset,
+        formState: { errors },
+    } = useForm<IForm>();
+    const navigate = useNavigate();
+    const onClick = () => {
+        navigate("/join");
+    };
+    const onValid = ({ account, password }: IForm) => {
+        authLogin({ account, password })
+            .then(checkLogin)
+            .then((data) => {
+                if (data.code.startsWith("412") && data.result) {
+                    setError(data.result.input, { message: data.message });
+                } else {
+                    refetch();
+                    reset();
+                }
+            })
+            .catch((error) => {
+                alert(error.message);
+                window.location.replace("/");
+            });
+    };
     return (
         <form onSubmit={handleSubmit(onValid)}>
             <InputGroup>
                 <InputColumn>
                     <input
-                        {...register("email", {
-                            required: "이메일을 입력해주세요.",
+                        {...register("account", {
+                            required: "이메일 혹은 닉네임을 입력해주세요.",
                         })}
                         type="text"
-                        placeholder="이메일"
+                        placeholder="이메일 혹은 닉네임"
                     />
+                    <ErrorMessage>{errors.account?.message}</ErrorMessage>
                 </InputColumn>
                 <InputColumn>
                     <input
@@ -25,6 +68,7 @@ function AuthForm() {
                         type="password"
                         placeholder="비밀번호"
                     />
+                    <ErrorMessage>{errors.password?.message}</ErrorMessage>
                 </InputColumn>
             </InputGroup>
             <ButtonGroup>
@@ -32,9 +76,7 @@ function AuthForm() {
                     로그인
                 </Button>
 
-                <Button>
-                    <Link to="/join">회원가입</Link>
-                </Button>
+                <Button onClick={onClick}>회원가입</Button>
             </ButtonGroup>
         </form>
     );

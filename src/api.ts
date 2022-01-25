@@ -10,3 +10,6 @@ const requrestApi = (addUrl: string, method: string, body?: string) =>
         body,
         credentials: "include",
     }).then((response) => response.json() as Promise<IResMessage>);
+
+export const authLogin = (user: IAuthUser) =>
+    requrestApi("auth/login", "post", JSON.stringify(user));
