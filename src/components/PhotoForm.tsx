@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { useRecoilState } from "recoil";
 import styled from "styled-components";
-import { albumState } from "../atom";
+import { addPhoto, uploadPhotoImage } from "../api";
 import {
     Button,
     ButtonGroup,
@@ -10,7 +9,8 @@ import {
     InputColumn,
     InputGroup,
 } from "../styles";
-import { IPhoto } from "../types";
+import { IPhoto } from "../types/model";
+import { checkLogin } from "../utils";
 import ThreeDotsWave from "./ThreeDotsWave";
 
 const Wrapper = styled.div`
@@ -55,108 +55,81 @@ const GroupWrap = styled.div`
 `;
 
 interface IParams {
-    albumId: string;
+    albumId: number;
+    refetch: any;
 }
 
 interface IForm {
     title: string;
     description?: string;
-    hashTags?: string;
-    url: string;
+    hashtags?: string;
+    img: FileList;
 }
 
-function PhotoForm({ albumId }: IParams) {
-    const [imagePath, setImagePath] = useState("");
+function PhotoForm({ albumId, refetch }: IParams) {
+    const [url, setUrl] = useState("");
     const [isLoading, setIsLoading] = useState(false);
-    const [isValid, setIsValid] = useState(false);
-    const [albums, setAlbums] = useRecoilState(albumState);
     const {
         register,
         handleSubmit,
-        getValues,
-        setValue,
+        reset,
         setError,
         formState: { errors },
     } = useForm<IForm>();
-    const onValid = (data: IForm) => {
-        if (isLoading) {
-            setError(
-                "url",
-                {
-                    message: "이미지를 불러오는 중 입니다.",
-                },
-                { shouldFocus: true }
-            );
-            return;
-        }
-        if (!isValid) {
-            setError(
-                "url",
-                {
-                    message: "이미지를 찾을 수 없습니다.",
-                },
-                { shouldFocus: true }
-            );
-            return;
-        }
-
-        const newObj = {} as IPhoto;
-        const albumIndex = albums.findIndex(
-            (album) => String(album.id) === albumId
-        );
-        if (albumIndex !== -1) {
-            const allAlbums = [...albums];
-            const albumCopy = { ...albums[albumIndex] };
-            newObj["id"] = Date.now();
-            newObj["title"] = data["title"];
-            newObj["createdAt"] = new Date().toLocaleString();
-            newObj["description"] = data["description"];
-            newObj["url"] = data["url"];
-            if (data["hashTags"]) {
-                newObj["hashTags"] = data["hashTags"]
-                    .trim()
-                    .split("#")
-                    .slice(1)
-                    .map((str) => str.trim());
-            } else {
-                newObj["hashTags"] = [];
-            }
-            albumCopy.photos = [...albumCopy.photos, newObj];
-
-            allAlbums.splice(albumIndex, 1);
-            allAlbums.splice(albumIndex, 0, albumCopy);
-
-            setAlbums([...allAlbums]);
-
-            setImagePath("");
-            setValue("title", "");
-            setValue("description", "");
-            setValue("hashTags", "");
-            setValue("url", "");
-            setIsLoading(false);
-            setIsValid(false);
+    const onChange = (event: React.FormEvent<HTMLInputElement>) => {
+        const {
+            currentTarget: { files },
+        } = event;
+        if (files) {
+            setIsLoading(true);
+            const fd = new FormData();
+            fd.append("img", files[0]);
+            uploadPhotoImage(fd)
+                .then(checkLogin)
+                .then((data) => {
+                    if (data.result) {
+                        setUrl(data.result.url);
+                    }
+                    setIsLoading(false);
+                })
+                .catch((error) => {
+                    alert(error.message);
+                    window.location.replace("/");
+                });
         }
     };
-    const onUrlBlur = () => {
-        const img = new Image();
-        const url = getValues("url");
-        setIsLoading(true);
+    const onValid = (data: IForm) => {
+        const newObj = {} as IPhoto;
+        newObj["title"] = data["title"];
+        newObj["description"] = data["description"];
+        newObj["url"] = url;
+        if (data["hashtags"]) {
+            newObj["Hashtags"] = data["hashtags"]
+                .trim()
+                .split("#")
+                .slice(1)
+                .map((str) => str.trim());
+        } else {
+            newObj["Hashtags"] = [];
+        }
 
-        img.onload = () => {
-            setIsLoading(false);
-            setIsValid(true);
-            setImagePath(url);
-        };
+        addPhoto(albumId, newObj)
+            .then(checkLogin)
+            .then((data) => {
+                if (data.code.startsWith("412") && data.result) {
+                    setError(data.result.input, { message: data.message });
+                    return;
+                }
 
-        img.onerror = () => {
-            setIsLoading(false);
-            setIsValid(false);
-            setImagePath(
-                "https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/No-Image-Placeholder.svg/1665px-No-Image-Placeholder.svg.png"
-            );
-        };
-
-        img.src = url;
+                setIsLoading(false);
+                setUrl("");
+                reset();
+                refetch();
+            })
+            .catch((error) => {
+                alert(error.message);
+                window.location.replace("/");
+            });
     };
     return (
         <Wrapper>
@@ -165,7 +138,7 @@ function PhotoForm({ albumId }: IParams) {
                     {isLoading ? (
                         <ThreeDotsWave />
                     ) : (
-                        <Preview imagePath={imagePath} />
+                        <Preview imagePath={url} />
                     )}
                 </PreviewWrap>
                 <GroupWrap>
@@ -191,7 +164,7 @@ function PhotoForm({ albumId }: IParams) {
                         </InputColumn>
                         <InputColumn>
                             <input
-                                {...register("hashTags", {
+                                {...register("hashtags", {
                                     pattern: {
                                         value: /#([0-9a-zA-Z가-힣]*)/g,
                                         message:
@@ -201,24 +174,19 @@ function PhotoForm({ albumId }: IParams) {
                                 placeholder="태그 입력"
                             />
                             <ErrorMessage>
-                                {errors.hashTags?.message}
+                                {errors.hashtags?.message}
                             </ErrorMessage>
                         </InputColumn>
                         <InputColumn>
                             <input
-                                {...register("url", {
-                                    required: "이미지 경로 입력은 필수입니다.",
-                                    pattern: {
-                                        value: /(http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-/]))?/g,
-                                        message:
-                                            "알맞은 URL 형식으로 입력하세요.",
-                                    },
+                                {...register("img", {
+                                    required: "이미지 입력은 필수입니다.",
+                                    onChange: onChange,
                                 })}
-                                type="url"
-                                placeholder="이미지 경로"
-                                onBlur={onUrlBlur}
+                                type="file"
+                                accept="image/*"
                             />
-                            <ErrorMessage>{errors.url?.message}</ErrorMessage>
+                            <ErrorMessage>{errors.img?.message}</ErrorMessage>
                         </InputColumn>
                     </InputGroup>
                     <ButtonGroup>

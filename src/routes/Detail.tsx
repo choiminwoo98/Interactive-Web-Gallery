@@ -1,19 +1,23 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { DragDropContext, DropResult } from "react-beautiful-dnd";
+import { useQuery } from "react-query";
 import {
     useLocation,
     useMatch,
     useNavigate,
     useParams,
 } from "react-router-dom";
-import { useRecoilState } from "recoil";
+import { useRecoilState, useRecoilValue } from "recoil";
 import styled from "styled-components";
-import { albumState, checkState } from "../atom";
+import { authAlbum, getAlbum } from "../api";
+import { cacheUserState, checkState } from "../atom";
 import BigPhoto from "../components/BigPhoto";
 import Board from "../components/Board";
 import NotFound from "../components/NotFound";
 import PhotoForm from "../components/PhotoForm";
+import ThreeDotsWave from "../components/ThreeDotsWave";
+import { IAlbum } from "../types/model";
 
 const Wrapper = styled.div`
     width: 100%;
@@ -41,25 +45,36 @@ interface IState {
 }
 
 function Detail() {
-    const [isNotFound, setIsNotFound] = useState(false);
+    const cacheUser = useRecoilValue(cacheUserState);
     const { albumId } = useParams();
     const { state } = useLocation() as IState;
-    const bigPhotoMatch = useMatch(`/album/${albumId}/:photoId`);
-    const navigate = useNavigate();
+    const [album, setAlbum] = useState<IAlbum | undefined>();
     const [isCheck, setIsCheck] = useRecoilState(checkState);
-    const [albums, setAlbums] = useRecoilState(albumState);
-    const albumIndex = albums.findIndex(
-        (album) => String(album.id) === albumId
+    const navigate = useNavigate();
+    const bigPhotoMatch = useMatch(`/detail/${albumId}/:photoId`);
+    const { isLoading, refetch } = useQuery(
+        ["Album", albumId + ""],
+        () => (albumId && +albumId ? getAlbum(+albumId) : undefined),
+        {
+            enabled: !!albumId,
+            onSuccess: (data) => {
+                if (data && data.code.startsWith("200") && data.result) {
+                    setAlbum(data.result.Album);
+                } else setAlbum(undefined);
+            },
+            notifyOnChangeProps: ["isLoading"],
+        }
     );
-
     const clickedPhoto =
         albumId &&
         bigPhotoMatch?.params.photoId &&
-        albums[albumIndex]?.photos.find(
-            (movie) => String(movie.id) === bigPhotoMatch?.params.photoId
+        album?.Photos?.find(
+            (photo) => String(photo.id) === bigPhotoMatch?.params.photoId
         );
+    const isNotFound =
+        !albumId || !+albumId || !album || (bigPhotoMatch && !clickedPhoto);
     const onOverlayClick = () =>
-        navigate(`/album/${albumId}`, {
+        navigate(`/detail/${albumId}`, {
             replace: true,
         });
     const changeIndex = (droppableId: string, index: number) => {
@@ -69,49 +84,52 @@ function Detail() {
     const onDragEnd = (info: DropResult) => {
         const { destination, source } = info;
         if (!destination) return;
+        if (!album || !album.Photos) return;
+
         const sourceIndex = changeIndex(source.droppableId, source.index);
         const destinationIndex = changeIndex(
             destination.droppableId,
             destination.index
         );
 
-        if (albums[albumIndex].photos.length <= destinationIndex) return;
-        setAlbums((allAlbums) => {
-            const allAlbumsCopy = [...allAlbums];
-            const albumCopy = { ...allAlbumsCopy[albumIndex] };
-            const photosCopy = [...albumCopy.photos].filter(
-                (photo) => photo !== undefined
-            );
+        if (album.Photos.length <= destinationIndex) return;
 
-            console.log(photosCopy);
-            console.log(
-                `sourceIndex: ${sourceIndex}, destinationIndex: ${destinationIndex}`
-            );
+        setAlbum((curAlbum) => {
+            const albumCopy = { ...curAlbum };
+            if (albumCopy.Photos) {
+                const photosCopy = [...albumCopy.Photos].filter(
+                    (photo) => photo !== undefined
+                );
 
-            [photosCopy[destinationIndex], photosCopy[sourceIndex]] = [
-                photosCopy[sourceIndex],
-                photosCopy[destinationIndex],
-            ];
+                [photosCopy[destinationIndex], photosCopy[sourceIndex]] = [
+                    photosCopy[sourceIndex],
+                    photosCopy[destinationIndex],
+                ];
 
-            albumCopy.photos = photosCopy;
+                albumCopy.Photos = photosCopy;
+            }
 
-            allAlbumsCopy.splice(albumIndex, 1);
-            allAlbumsCopy.splice(albumIndex, 0, albumCopy);
-
-            return [...allAlbumsCopy];
+            return { ...albumCopy };
         });
     };
     useEffect(() => {
-        if (!albumId || albumIndex === -1) {
-            return setIsNotFound(true);
-        } else if (
-            albums[albumIndex].password &&
-            !(state?.isCheck || isCheck)
-        ) {
+        if (!(state?.isCheck || isCheck) && album && album.locked && album.id) {
             let isWrong = true;
             do {
-                isWrong =
-                    prompt("비밀번호 입력", "") !== albums[albumIndex].password;
+                let copyIsWrong = true;
+                const password = prompt("비밀번호 입력", "");
+
+                if (!password) break;
+                authAlbum(album.id, password)
+                    .then((data) => {
+                        if (data.code.startsWith("200")) copyIsWrong = false;
+                    })
+                    .catch((error) => {
+                        alert(error.message);
+                        navigate("/", { replace: true });
+                    });
+
+                isWrong = copyIsWrong;
             } while (
                 isWrong &&
                 window.confirm("비밀번호가 틀렸습니다. 다시 시도하겠습니까?")
@@ -122,36 +140,37 @@ function Detail() {
             }
             setIsCheck(true);
         }
-    }, [albumId, navigate, state, albums, albumIndex, setIsCheck, isCheck]);
+    }, [album, isCheck, navigate, setIsCheck, state]);
     return (
         <>
-            {(bigPhotoMatch && !clickedPhoto) || isNotFound ? (
+            {isLoading && <ThreeDotsWave />}
+            {!isLoading && isNotFound ? (
                 <NotFound />
             ) : (
-                <>
-                    <Wrapper>
-                        <PhotoForm albumId={albumId || ""} />
-                        <DragDropContext onDragEnd={onDragEnd}>
-                            {["left", "right"].map((value) => (
-                                <Board
-                                    boardId={value}
-                                    key={value}
-                                    photos={
-                                        albums[albumIndex]
-                                            ? albums[albumIndex].photos.filter(
-                                                  (photo, index) =>
-                                                      photo &&
-                                                      index % 2 ===
-                                                          (value === "left"
-                                                              ? 0
-                                                              : 1)
-                                              )
-                                            : []
-                                    }
-                                />
-                            ))}
-                        </DragDropContext>
-                    </Wrapper>
+                <Wrapper>
+                    {cacheUser && album?.id && (
+                        <PhotoForm albumId={album.id} refetch={refetch} />
+                    )}
+
+                    <DragDropContext onDragEnd={onDragEnd}>
+                        {["left", "right"].map((value) => (
+                            <Board
+                                boardId={value}
+                                key={value}
+                                photos={
+                                    album?.Photos
+                                        ? album.Photos.filter(
+                                              (photo, index) =>
+                                                  photo &&
+                                                  index % 2 ===
+                                                      (value === "left" ? 0 : 1)
+                                          )
+                                        : []
+                                }
+                            />
+                        ))}
+                    </DragDropContext>
+
                     <AnimatePresence exitBeforeEnter={false}>
                         {bigPhotoMatch && (
                             <>
@@ -167,7 +186,7 @@ function Detail() {
                             </>
                         )}
                     </AnimatePresence>
-                </>
+                </Wrapper>
             )}
         </>
     );

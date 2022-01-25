@@ -26,3 +26,19 @@ export const createAlbum = (newAlbum: IAlbum) =>
 
 export const authAlbum = (albumId: number, password: string) =>
     requrestApi(`auth/album/${albumId}`, "post", JSON.stringify({ password }));
+
+export const getAlbum = (albumId: number) =>
+    requrestApi(`album/${albumId}`, "get");
+
+export const addPhoto = (albumId: number, newPhoto: IPhoto) =>
+    requrestApi(`album/${albumId}`, "post", JSON.stringify(newPhoto));
+
+export const uploadAlbumImage = (fd: FormData) =>
+    fetch(`${BASE_URL}/post/album`, { method: "post", body: fd }).then(
+        (response) => response.json() as Promise<IResMessage>
+    );
+
+export const uploadPhotoImage = (fd: FormData) =>
+    fetch(`${BASE_URL}/post/photo`, { method: "post", body: fd }).then(
+        (response) => response.json() as Promise<IResMessage>
+    );
