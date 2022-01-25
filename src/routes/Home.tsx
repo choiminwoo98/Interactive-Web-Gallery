@@ -1,7 +1,7 @@
 import { Outlet } from "react-router-dom";
-import { useRecoilState } from "recoil";
+import { useRecoilValue } from "recoil";
 import styled from "styled-components";
-import { isLoggedState } from "../atom";
+import { cacheUserState } from "../atom";
 import AuthForm from "../components/Auth";
 import Profile from "../components/Profile";
 
@@ -43,19 +43,24 @@ const ProfileWrap = styled.div`
     }
 `;
 
-function Home() {
-    const [isLogged, setIsLogged] = useRecoilState(isLoggedState);
-    const onClick = () => {
-        setIsLogged((prev) => !prev);
-    };
+interface IParams {
+    refetch: any;
+}
+
+function Home({ refetch }: IParams) {
+    const cacheUser = useRecoilValue(cacheUserState);
     return (
         <Container>
             <ProfileArea>
                 <ProfileWrap>
-                    {isLogged ? <Profile /> : <AuthForm />}
+                    {cacheUser ? (
+                        <Profile refetch={refetch} />
+                    ) : (
+                        <AuthForm refetch={refetch} />
+                    )}
                 </ProfileWrap>
-                <button onClick={onClick}>변환</button>
             </ProfileArea>
+
             <Outlet />
         </Container>
     );

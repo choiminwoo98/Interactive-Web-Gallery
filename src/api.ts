@@ -13,3 +13,5 @@ const requrestApi = (addUrl: string, method: string, body?: string) =>
 
 export const authLogin = (user: IAuthUser) =>
     requrestApi("auth/login", "post", JSON.stringify(user));
+
+export const getUser = () => requrestApi("user", "get");
