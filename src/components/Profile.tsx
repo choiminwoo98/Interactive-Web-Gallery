@@ -1,6 +1,9 @@
-import { Link } from "react-router-dom";
+import { useRecoilValue } from "recoil";
 import styled from "styled-components";
+import { authLogout } from "../api";
+import { cacheUserState } from "../atom";
 import { Button } from "../styles";
+import { checkLogin } from "../utils";
 
 const Username = styled.div`
     font-weight: bold;
@@ -26,25 +29,43 @@ const Counter = styled.div`
     margin-top: 5px;
 `;
 
-function Profile() {
+interface IParams {
+    refetch: any;
+}
+
+function Profile({ refetch }: IParams) {
+    const cacheUser = useRecoilValue(cacheUserState);
+    const onClick = () => {
+        authLogout()
+            .then(checkLogin)
+            .then(() => {
+                refetch();
+            })
+            .catch((error) => {
+                alert(error.message);
+                window.location.replace("/");
+            });
+    };
     return (
         <>
-            <Username>안녕하세요 정재현님</Username>
-            <GroupBox>
-                <Half>
-                    <div>앨범 수</div>
-                    <Counter>1</Counter>
-                </Half>
-                <Half>
-                    <div>사진 수</div>
-                    <Counter>2</Counter>
-                </Half>
-            </GroupBox>
-            <GroupBox>
-                <Link to="/">
-                    <Button>로그아웃</Button>
-                </Link>
-            </GroupBox>
+            {cacheUser && (
+                <>
+                    <Username>{`안녕하세요 ${cacheUser.nick}님`}</Username>
+                    <GroupBox>
+                        <Half>
+                            <div>앨범 수</div>
+                            <Counter>0</Counter>
+                        </Half>
+                        <Half>
+                            <div>사진 수</div>
+                            <Counter>0</Counter>
+                        </Half>
+                    </GroupBox>
+                    <GroupBox>
+                        <Button onClick={onClick}>로그아웃</Button>
+                    </GroupBox>
+                </>
+            )}
         </>
     );
 }
