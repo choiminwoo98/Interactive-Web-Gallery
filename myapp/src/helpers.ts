@@ -14,6 +14,6 @@ export const reorder = <T>(
 export const getItems = (count: number) =>
   Array.from({ length: count }, (v, k) => k).map((k) => ({
     id: `Item ${k + 1}`,
-    primary: `abc ${k + 1}`,
-    secondary: "def",
+    primary: `앨범 ${k + 1}`,
+    secondary: "앨범 내용",
   }));

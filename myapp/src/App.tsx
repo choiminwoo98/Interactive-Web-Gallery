@@ -8,27 +8,32 @@ import Scene from "./Canvas";
 import styled from "styled-components";
 import Dnd from "./dnd";
 import State from "./state";
-
+import UserState from "./userState";
+import { BrowserRouter } from "react-router-dom";
 const Container = styled(motion.div)`
   width: 100%;
   height: 100%;
   position: absolute;
+  overflow: hidden;
 `;
 
 export default function App() {
   return (
-    <div>
-      <div id="panel">
-        <Dnd />
+    <BrowserRouter>
+      <div>
+        <div id="panel"></div>
+        <div id="state">
+          <Dnd />
+        </div>
+        <div id="userState">
+          <UserState />
+        </div>
+        <MotionConfig transition={{ type: "tween" }}>
+          <Container>
+            <Scene />
+          </Container>
+        </MotionConfig>
       </div>
-      <div id="state">
-        <State />
-      </div>
-      <MotionConfig transition={{ type: "tween" }}>
-        <Container>
-          <Scene />
-        </Container>
-      </MotionConfig>
-    </div>
+    </BrowserRouter>
   );
 }

@@ -9,8 +9,8 @@ import InputAdornment from "@mui/material/InputAdornment";
 import FormHelperText from "@mui/material/FormHelperText";
 import FormControl from "@mui/material/FormControl";
 import TextField from "@mui/material/TextField";
-import { Button } from "@material-ui/core";
-
+import { Button, makeStyles } from "@material-ui/core";
+import { Link } from "react-router-dom";
 interface State {
   amount: string;
   password: string;
@@ -19,7 +19,39 @@ interface State {
   showPassword: boolean;
 }
 
-export default function State() {
+const useStyles = makeStyles({
+  flexPaper: {
+    margin: 16,
+    minWidth: 300,
+  },
+  root: {
+    display: "flex",
+    flexdirection: "row",
+    flexWrap: "wrap",
+    backgroundColor: "#ebfaff",
+  },
+  ul: {
+    listStyle: "none",
+  },
+  ol: {
+    listStyle: "none",
+  },
+  a: { textDecoration: "none" },
+  menu: {
+    width: "100%",
+  },
+  section: {
+    width: "340px",
+    padding: "30px",
+    backgroundColor: "#fff",
+    margin: "50px auto",
+    boxShadow: "10px 10px 30px rgba(0,0,0,0.1)",
+    borderRadius: "10px",
+    height: "50px",
+  },
+});
+export default function UserState() {
+  const classes = useStyles();
   const [values, setValues] = React.useState<State>({
     amount: "",
     password: "",
@@ -46,11 +78,12 @@ export default function State() {
     event.preventDefault();
   };
   return (
-    <div>
-      <h1>album Information</h1>
-      <div className="circle"></div>
-      <Button>저장</Button>
-      <Button>앨범 들어가기</Button>
+    <div className={classes.root}>
+      <div className={classes.section}>
+        <div className={classes.menu}>
+          
+          </div>
+      </div>
     </div>
   );
 }

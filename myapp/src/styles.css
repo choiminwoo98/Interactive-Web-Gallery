@@ -1,5 +1,6 @@
 * {
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 html,
@@ -12,17 +13,26 @@ body {
 }
 
 #panel {
+  margin-top: 15px;
   z-index: 2;
+  overflow-y: scroll;
+  max-height: 80vh;
   position: absolute;
 }
-
+#state::-webkit-scrollbar {
+  display: none; /* Chrome , Safari , Opera */
+}
 #state {
   z-index: 2;
   position: absolute;
-  top: 10px;
   right: 10px;
+  overflow-y: scroll;
+  max-height: 50vh;
+}
+#userState {
+  z-index: 2;
+  position: absolute;
+  right: 20px;
   bottom: 10px;
-  width: 15%;
-  height: 100%;
-  background-color: aquamarine;
+  max-height: 50vh;
 }

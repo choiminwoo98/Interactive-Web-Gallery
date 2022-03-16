@@ -3,14 +3,11 @@ import makeStyles from "@material-ui/core/styles/makeStyles";
 import Paper from "@material-ui/core/Paper";
 import { DropResult } from "react-beautiful-dnd";
 import DraggableList from "./components/DraggableList";
-//import pick from '@cahil/utils/accessors/pick';
 import { getItems, reorder } from "./helpers";
-import "./styles.css";
+import { useState } from "react";
 
 const useStyles = makeStyles({
   flexPaper: {
-    position: "absolute",
-    flex: "auto",
     margin: 16,
     minWidth: 300,
   },
@@ -18,12 +15,34 @@ const useStyles = makeStyles({
     display: "flex",
     flexdirection: "row",
     flexWrap: "wrap",
-    height: "90%",
   },
 });
+
+const options = [
+  {
+    name: "Enable backdrop (default)",
+    scroll: false,
+    backdrop: true,
+  },
+  {
+    name: "Disable backdrop",
+    scroll: false,
+    backdrop: false,
+  },
+  {
+    name: "Enable body scrolling",
+    scroll: true,
+    backdrop: false,
+  },
+  {
+    name: "Enable both scrolling & backdrop",
+    scroll: true,
+    backdrop: true,
+  },
+];
 export default function Dnd() {
   const classes = useStyles();
-  const [items, setItems] = React.useState(getItems(9));
+  const [items, setItems] = React.useState(getItems(10));
 
   const onDragEnd = ({ destination, source }: DropResult) => {
     // dropped outside the list
@@ -36,9 +55,12 @@ export default function Dnd() {
   return (
     <div className={classes.root}>
       <Paper className={classes.flexPaper}>
-        <DraggableList items={items} onDragEnd={onDragEnd} />
+        <DraggableList
+          setItems={setItems}
+          items={items}
+          onDragEnd={onDragEnd}
+        />
       </Paper>
-      <Paper className={classes.flexPaper}></Paper>
     </div>
   );
 }
